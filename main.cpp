@@ -3,6 +3,8 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
+
 
 #include <cstdlib>
 #include <cassert>
@@ -214,6 +216,7 @@ public:
         //     for(auto &hl : hiddenLayer) hl.hiddenGradient(nextLayer);
         // }
 
+
         for(int nl = netLayers.size()-2; nl > 0; --nl) {
             Layer &hiddenLayer = netLayers[nl];
             Layer &nextLayer = netLayers[nl+1];
@@ -223,7 +226,7 @@ public:
         }
 
 
-        // // Update connection weights
+        // Update connection weights
         for(int nl = netLayers.size() - 1; nl > 0; --nl) {  // Fromt outputs to first hidden layer
             Layer &currLayer = netLayers[nl];
             Layer &prevLayer = netLayers[nl-1];
@@ -237,12 +240,14 @@ public:
 
         // !!! C++20 !!!
         for(auto index = 0; const auto &nl : netLayers.back()) {
-            if(index++ == netLayers.size()) continue;
+            if(++index == netLayers.size()-1) continue;
             resultData.push_back(nl.output());
         }
     }
 
     double avgError() {return recAvgError;}
+
+    std::vector<Layer> nl() {return netLayers;}
 
 private:
     double netError = 0.0;
@@ -261,20 +266,55 @@ auto main() -> int {
     std::vector<int> topology{2, 4, 1};
     Network net(topology);
 
-    std::vector<double> inputData{1.0, 0.0};
-    std::vector<double> targetData{1.0};
+    std::vector<double> inputData;
+    std::vector<double> targetData;
     std::vector<double> resultData;
 
-    for(const auto &id : inputData) std::cout << "Input data: " << id << std::endl;
+
+    std::ifstream file;
+    std::string label;  std::string line;
     
-    net.feedForward(inputData);
-    net.result(resultData);
+    int iteration = 0;
+    while(iteration++ != 3) {
+        file.open("data.txt");
+        std::cout << "\nIteration " << iteration << std::endl;
+        std::cout << std::endl;
 
-    for(const auto &id : resultData) std::cout << "Output: " << id << " ";
-    for(const auto &id : targetData) std::cout << "Target: " << id << std::endl;
+        while(getline(file, line)) {
+            std::stringstream ss(line);
+            ss >> label;
 
-    net.backPropagation(targetData);
-    std::cout << "Avg Error: " << net.avgError() << std::endl;
+            if(label.compare("in:") == 0) {
+                inputData.clear();
+                double val = 0.0f;
+                while(ss >> std::fixed >> std::setprecision(1) >> val) inputData.push_back(val);
+            }
 
+            if(label.compare("out:") == 0) {
+                targetData.clear();
+                double val = 0.0f;
+                while(ss >> std::fixed >> std::setprecision(1) >> val) targetData.push_back(val);
+            }
+
+            if(inputData.size() <= 0 || targetData.size() <= 0) continue;
+
+
+            std::cout << std::endl;
+            std::cout << "Input: ";
+            for(const auto &id : inputData) std::cout << std::fixed << std::setprecision(1) << id << " ";
+
+            net.feedForward(inputData);
+            net.result(resultData);
+
+            std::cout << std::endl;
+            for(const auto &rd : resultData) std::cout << "Output: " << rd << std::endl;
+            for(const auto &td : targetData) std::cout << "Target: " << td << std::endl;
+
+            net.backPropagation(targetData);
+            std::cout << "Avg Error: " << net.avgError() << std::endl;
+        }
+
+        file.close();
+    }
     return 0;
 }
