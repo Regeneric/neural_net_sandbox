@@ -77,13 +77,30 @@ public:
     }
 
     void inputWeights(Layer &prevLayer) {
-        // !!! C++20 !!!
-        for(auto index = 0; auto &pl : prevLayer) {
-            double oldWeight = pl._weights[++index].weight();
+        for(auto &pl : prevLayer) {
+            double oldWeight = pl._weights[_nID].weightChange();
 
             // Input, gradient, fraction of old data and train rate defines new weight
-            double newWeight = eta * pl.output() * _gradient + alpha + oldWeight;
+            double newWeight = eta * pl.output() * _gradient + alpha * oldWeight;
+
+            double buff = pl._weights[_nID].weight();
+            buff += newWeight;
+
+            pl._weights[_nID].weightChange(newWeight);
+            pl._weights[_nID].weight(buff);
         }
+
+        // for(int n = 0; n < prevLayer.size(); ++n) {
+        //     Neuron &neuron = prevLayer[n];
+        //     double oldWeight = neuron._weights[_nID].weightChange();
+        //     double newWeight = eta * neuron.output() * _gradient + alpha * oldWeight;
+
+        //     double buff = neuron._weights[_nID].weight();
+        //     buff += newWeight;
+
+        //     neuron._weights[_nID].weightChange(newWeight);
+        //     neuron._weights[_nID].weight(buff);
+        // }
     }
 
 
@@ -275,8 +292,9 @@ auto main() -> int {
     std::string label;  std::string line;
     
     int iteration = 0;
-    while(iteration++ != 3) {
+    while(iteration++ != 5000) {
         file.open("data.txt");
+
         std::cout << "\nIteration " << iteration << std::endl;
         std::cout << std::endl;
 
@@ -287,13 +305,13 @@ auto main() -> int {
             if(label.compare("in:") == 0) {
                 inputData.clear();
                 double val = 0.0f;
-                while(ss >> std::fixed >> std::setprecision(1) >> val) inputData.push_back(val);
+                while(ss >> val) inputData.push_back(val);
             }
 
             if(label.compare("out:") == 0) {
                 targetData.clear();
                 double val = 0.0f;
-                while(ss >> std::fixed >> std::setprecision(1) >> val) targetData.push_back(val);
+                while(ss >> val) targetData.push_back(val);
             }
 
             if(inputData.size() <= 0 || targetData.size() <= 0) continue;
@@ -307,8 +325,8 @@ auto main() -> int {
             net.result(resultData);
 
             std::cout << std::endl;
-            for(const auto &rd : resultData) std::cout << "Output: " << rd << std::endl;
-            for(const auto &td : targetData) std::cout << "Target: " << td << std::endl;
+            for(const auto &rd : resultData) std::cout << "Output: " << std::fixed << std::setprecision(8) << rd << std::endl;
+            for(const auto &td : targetData) std::cout << "Target: " << std::fixed << std::setprecision(8) << td << std::endl;
 
             net.backPropagation(targetData);
             std::cout << "Avg Error: " << net.avgError() << std::endl;
