@@ -77,30 +77,30 @@ public:
     }
 
     void inputWeights(Layer &prevLayer) {
-        for(auto &pl : prevLayer) {
-            double oldWeight = pl._weights[_nID].weightChange();
+        // for(auto &pl : prevLayer) {
+        //     double oldWeight = pl._weights[_nID].weightChange();
 
-            // Input, gradient, fraction of old data and train rate defines new weight
-            double newWeight = eta * pl.output() * _gradient + alpha * oldWeight;
+        //     // Input, gradient, fraction of old data and train rate defines new weight
+        //     double newWeight = eta * pl.output() * _gradient + alpha * oldWeight;
 
-            double buff = pl._weights[_nID].weight();
-            buff += newWeight;
-
-            pl._weights[_nID].weightChange(newWeight);
-            pl._weights[_nID].weight(buff);
-        }
-
-        // for(int n = 0; n < prevLayer.size(); ++n) {
-        //     Neuron &neuron = prevLayer[n];
-        //     double oldWeight = neuron._weights[_nID].weightChange();
-        //     double newWeight = eta * neuron.output() * _gradient + alpha * oldWeight;
-
-        //     double buff = neuron._weights[_nID].weight();
+        //     double buff = pl._weights[_nID].weight();
         //     buff += newWeight;
 
-        //     neuron._weights[_nID].weightChange(newWeight);
-        //     neuron._weights[_nID].weight(buff);
+        //     pl._weights[_nID].weightChange(newWeight);
+        //     pl._weights[_nID].weight(buff);
         // }
+
+        for(int n = 0; n < prevLayer.size(); ++n) {
+            Neuron &neuron = prevLayer[n];
+            double oldWeight = neuron._weights[_nID].weightChange();
+            double newWeight = eta * neuron.output() * _gradient + alpha * oldWeight;
+
+            double buff = neuron._weights[_nID].weight();
+            buff += newWeight;
+
+            neuron._weights[_nID].weightChange(newWeight);
+            neuron._weights[_nID].weight(buff);
+        }
     }
 
 
@@ -123,7 +123,7 @@ private:
     // Hyperbolic tanget function - https://en.wikipedia.org/wiki/Hyperbolic_functions#Hyperbolic_tangent
     // Scalling output between -1.0 and 1.0
     static double transfer(double x) {return tanh(x);}
-    static double transferDeriv(double x) {return 1.0 - (x * x);}   // Very close approximation
+    static double transferDeriv(double x) {return 1.0 - x * x;}   // Very close approximation
     double sumDOW(const Layer &nextLayer) const {
         double sum = 0.0;
         // !!! C++20 !!!
@@ -141,7 +141,7 @@ private:
     // static double randomizeWeight() {return rand() / double(RAND_MAX);}
 };
 
-double Neuron::eta = 0.15;      // Net learning speed  -  0.0 - 1.0
+double Neuron::eta = 0.25;      // Net learning speed  -  0.0 - 1.0
 double Neuron::alpha = 0.5;     // Multiplier of last weight  -  0.0 - n
 
 
@@ -293,7 +293,7 @@ auto main() -> int {
     
     int iteration = 0;
     while(iteration++ != 5000) {
-        file.open("data.txt");
+        file.open("xor.txt");
 
         std::cout << "\nIteration " << iteration << std::endl;
         std::cout << std::endl;
