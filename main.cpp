@@ -193,16 +193,23 @@ private:
 
 double Network::recAvgSmoothing = 100.0;
 double Neuron::eta = 0.15;      // Net learning speed  -  0.0 - 1.0
-double Neuron::alpha = 0.5;     // Multiplier of last weight  -  0.0 - n
+double Neuron::alpha = 0.15;     // Multiplier of last weight  -  0.0 - n
 
 auto main() -> int {
     // Topology {X, Y, Z} - X inputs, Y neurons in hidden layer, Z outputs
     std::vector<int> topology{2, 4, 1};
     Network net(topology);
 
+
+    struct SerialisedOutput {
+        int iteration;
+        double data;
+    };
+
     std::vector<double> inputData;
     std::vector<double> targetData;
     std::vector<double> resultData;
+    std::vector<SerialisedOutput> resultDataSerialised;
     std::vector<int> labels;
 
 
@@ -210,7 +217,10 @@ auto main() -> int {
     std::string label;  std::string line;
     
     int iteration = 0;
-    while(iteration++ != 1) {
+    int passCounter = 0;
+    int failCounter = 0;
+
+    while(iteration++ != 3000) {
         file.open("or-control.txt");
         std::cout << "\nStarting iteration " << iteration << std::endl;
 
@@ -237,8 +247,9 @@ auto main() -> int {
                 while(ss >> val) targetData.push_back(val);
             }
 
-            if(inputData.size() <= 0 || targetData.size() <= 0) continue;
 
+            // Guard clause
+            if(inputData.size() <= 0 || targetData.size() <= 0) continue;
 
             // std::cout << std::endl;
             // std::cout << "Number: ";
@@ -250,10 +261,22 @@ auto main() -> int {
             net.feedForward(inputData);
             net.result(resultData);
 
-            std::cout << std::endl << std::endl;
-            for(const auto &rd : resultData) std::cout << "Output: " << std::fixed << std::setprecision(4) << rd << " ";
-
             std::cout << std::endl;
+            for(const auto &rd : resultData) {
+                std::cout << "Output: " << std::fixed << std::setprecision(4) << rd << " ";
+                if(rd > 0.95) {
+                    std::cout << "PASS" << std::endl;
+                    passCounter++;
+                } else {
+                    std::cout << "FAIL" << std::endl;
+                    failCounter++;
+                }
+                
+                resultDataSerialised.push_back(SerialisedOutput());
+                resultDataSerialised.back().iteration = iteration;
+                resultDataSerialised.back().data = rd;
+            }
+
             for(const auto &td : targetData) std::cout << "Target: " << std::fixed << std::setprecision(4) << td << " ";
             std::cout << std::endl << std::endl;
 
@@ -262,6 +285,8 @@ auto main() -> int {
         } 
 
         std::cout << "End of iteration " << iteration << std::endl;
+        std::cout << "Passed " << passCounter << " times" << std::endl;
+        std::cout << "Failed " << failCounter << " times" << std::endl;
         
         file.close();
         file.clear();
