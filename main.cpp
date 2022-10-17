@@ -1,215 +1,203 @@
-// #include <iostream>
-// #include <vector>
-// #include <string>
-// #include <fstream>
-// #include <sstream>
-// #include <iomanip>
+#include <iostream>
+#include <vector>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
 
 
-// #include <cstdlib>
-// #include <cassert>
-// #include <cmath>
+#include <cstdlib>
+#include <cassert>
+#include <cmath>
 
 
-// class Neuron;
-// typedef std::vector<Neuron> Layer;
+class Neuron;
+typedef std::vector<Neuron> Layer;
 
 
-// // struct Connection {
-// //     double weight;
-// //     double weightChange;
-// // };
-
-// class Connection {
-// public:
-//     Connection() {
-//         _weight = randomizeWeight();     // Assing random weight - to be trained
-//     } ~Connection(){}
-
-//     void weight(double weight) {_weight = weight;}
-//     double weight() const {return _weight;}
-
-//     void weightChange(double weightChange) {_weightChange = weightChange;}
-//     double weightChange() const {return _weightChange;}
-
-// private:
-//     double _weight = 0;
-//     double _weightChange = 0;
-
-//     static double randomizeWeight() {return rand() / double(RAND_MAX);}
-// };
+class Connection {
+public:
+    Connection() {_weight = randomizeWeight();}     // Assing random weight - to be trained
 
 
-// class Neuron {
-// public:
-//     Neuron(int outputs, int nID){
-//         for(int o = 0; o < outputs; ++o) {
-//             _weights.push_back(Connection());
-//             _nID = nID;
-//             // weights.back().weight = randomizeWeight();       // Assing random weight - to be trained
-//         }
-//     } ~Neuron(){}
+    void weight(double weight) {_weight = weight;}
+    double weight() const {return _weight;}
+
+    void weightChange(double weightChange) {_weightChange = weightChange;}
+    double weightChange() const {return _weightChange;}
+
+private:
+    double _weight = 0;
+    double _weightChange = 0;
+
+    static double randomizeWeight() {return rand() / double(RAND_MAX);}
+};
 
 
-//     void feedForward(const Layer &prevLayer) {
-//         double sum = 0.0;
-
-//         for(int n = 0; n < prevLayer.size(); ++n) {
-//             sum += prevLayer[n].output() * prevLayer[n]._weights[_nID].weight();
-//         }
-
-//         _output = Neuron::transfer(sum);    // Neuron:: not needed, added for my sanity
-//     }
+class Neuron {
+public:
+    Neuron(int outputs, int nID){
+        for(int o = 0; o < outputs; ++o) _weights.push_back(Connection());
+        _nID = nID;
+    }
 
 
-//     void outputGradient(double targetData) {
-//         double delta = targetData - _output;
-//         _gradient = delta * Neuron::transferDeriv(_output);
-//     }
+    void feedForward(const Layer &prevLayer) {
+        double sum = 0.0;
 
-//     void hiddenGradient(const Layer &nextLayer) {
-//         double dow = sumDOW(nextLayer);
-//         _gradient = dow * Neuron::transferDeriv(_output);
-//     }
+        for(int n = 0; n < prevLayer.size(); ++n) {
+            sum += prevLayer[n].output() * prevLayer[n]._weights[_nID].weight();
+        }
 
-//     void inputWeights(Layer &prevLayer) {
-//         for(int n = 0; n < prevLayer.size(); ++n) {
-//             Neuron &neuron = prevLayer[n];
-//             double oldWeight = neuron._weights[_nID].weightChange();
-//             double newWeight = eta * neuron.output() * _gradient + alpha * oldWeight;
-
-//             double buff = neuron._weights[_nID].weight();
-//             buff += newWeight;
-
-//             neuron._weights[_nID].weightChange(newWeight);
-//             neuron._weights[_nID].weight(buff);
-//         }
-//     }
+        _output = Neuron::transfer(sum);    // Neuron:: not needed, added for my sanity
+    }
 
 
-//     void output(double outputs) {_output = outputs;}
-//     double output() const {return _output;}
+    void outputGradient(double targetData) {
+        double delta = targetData - _output;
+        _gradient = delta * Neuron::transferDeriv(_output);
+    }
 
-// private:
-//     int _nID = 0;
+    void hiddenGradient(const Layer &nextLayer) {
+        double dow = sumDOW(nextLayer);
+        _gradient = dow * Neuron::transferDeriv(_output);
+    }
+
+    void inputWeights(Layer &prevLayer) {
+        for(int n = 0; n < prevLayer.size(); ++n) {
+            Neuron &neuron = prevLayer[n];
+            double oldWeight = neuron._weights[_nID].weightChange();
+            double newWeight = eta * neuron.output() * _gradient + alpha * oldWeight;
+
+            double buff = neuron._weights[_nID].weight();
+            buff += newWeight;
+
+            neuron._weights[_nID].weightChange(newWeight);
+            neuron._weights[_nID].weight(buff);
+        }
+    }
+
+
+    void output(double outputs) {_output = outputs;}
+    double output() const {return _output;}
+
+private:
+    int _nID = 0;
     
-//     double _output = 0.0;
-//     double _gradient = 0.0;
+    double _output = 0.0;
+    double _gradient = 0.0;
 
-//     static double eta;
-//     static double alpha;
+    static double eta;
+    static double alpha;
 
-//     std::vector<Connection> _weights;
-
-
-//     // Hyperbolic tanget function - https://en.wikipedia.org/wiki/Hyperbolic_functions#Hyperbolic_tangent
-//     // Scalling output between -1.0 and 1.0
-//     static double transfer(double x) {return tanh(x);}
-//     static double transferDeriv(double x) {return 1.0 - x * x;}   // Very close approximation
-//     double sumDOW(const Layer &nextLayer) const {
-//         double sum = 0.0;
-
-//         for(int n = 0; n < nextLayer.size()-1; ++n) {
-//             sum += _weights[n].weight() * nextLayer[n]._gradient;
-//         } return sum;
-//     }
-// };
+    std::vector<Connection> _weights;
 
 
+    // Hyperbolic tanget function - https://en.wikipedia.org/wiki/Hyperbolic_functions#Hyperbolic_tangent
+    // Scalling output between -1.0 and 1.0
+    static double transfer(double x);
+    static double transferDeriv(double x);   // Very close approximation
+    double sumDOW(const Layer &nextLayer) const {
+        double sum = 0.0;
 
-// class Network {
-// public:
-//     Network(const std::vector<int> &topology) {
-//         for(int t = 0; t < topology.size(); ++t) {      // I need integer iterator for nested loop, hence there's no ranged-for or vector iterators
-//             netLayers.push_back(Layer());
-//             int outputs = (t == topology.size()-1) ? 0 : topology[t+1];     // If it's output layer, we don't need a neuron to have its own output
-//                                                                             // `t+1` because we want `Layer 1' neurons to have `Layer 2` neurons count outputs 
+        for(int n = 0; n < nextLayer.size()-1; ++n) {
+            sum += _weights[n].weight() * nextLayer[n]._gradient;
+        } return sum;
+    }
+};
 
-//             for(int n = 0; n <= topology[t]; ++n) {                 // Adding one more neuron than declared - `bias neuron` - not needed in ouput layer
-//                 netLayers.back().push_back(Neuron(outputs, n));     // Push neuron to latest added layer
-//                 std::cout << "Added " << n+1 << "th neuron to layer " << t+1 << std::endl;
-//             }
-
-//             // Setup bias neuron
-//             netLayers.back().back().output(0.5);
-//         }
-//     } ~Network(){}
-
-//     void feedForward(const std::vector<double> &inputData) {
-//         assert(inputData.size() == netLayers[0].size() - 1);                                // Make sure that number of input values == input layer neurons
-//         for(auto index = 0; const auto &id : inputData) netLayers[0][index++].output(id);   // Hold input value in input layer neuron
-
-//         for(int nl = 1; nl < netLayers.size(); ++nl) {
-//             Layer &prevLayer = netLayers[nl-1];
-//             for(int n = 0; n < netLayers[nl].size()-1; ++n) {
-//                 netLayers[nl][n].feedForward(prevLayer);
-//             }
-//         }  
-//     }
+double Neuron::transfer(double x) {return tanh(x);}
+double Neuron::transferDeriv(double x) {return 1.0 - x*x;}
 
 
-//     void backPropagation(const std::vector<double> &targetData) {
-//         // Root Mean Sqaure Error (RMSE) - https://en.wikipedia.org/wiki/Root-mean-square_deviation
-//         Layer &outputLayer = netLayers.back();
-//         netError = 0.0;
 
-//         for(int n = 0; n < outputLayer.size()-1; ++n) {
-//             double delta = targetData[n] - outputLayer[n].output();
-//             netError += delta * delta;
-//         }
+class Network {
+public:
+    Network(const std::vector<int> &topology) {
+        for(int t = 0; t < topology.size(); ++t) {      // I need integer iterator for nested loop, hence there's no ranged-for or vector iterators
+            netLayers.push_back(Layer());
+            int outputs = (t == topology.size()-1) ? 0 : topology[t+1];     // If it's output layer, we don't need a neuron to have its own output
+                                                                            // `t+1` because we want `Layer 1' neurons to have `Layer 2` neurons count outputs 
 
+            for(int n = 0; n <= topology[t]; ++n) {                 // Adding one more neuron than declared - `bias neuron` - not needed in ouput layer
+                netLayers.back().push_back(Neuron(outputs, n));     // Push neuron to latest added layer
+                std::cout << "Added " << n+1 << "th neuron to layer " << t+1 << std::endl;
+            }
 
-//         netError /= outputLayer.size() - 1;     // Get the average
-//         netError = sqrt(netError);              // RMS
+            // Setup bias neuron
+            netLayers.back().back().output(0.5);
+        }
+    } ~Network(){}
 
-//         // Recent average measure - indicator how well the net is doing
-//         recAvgError = (recAvgSmoothing + netError) / (recAvgSmoothing + 1.0);
+    void feedForward(const std::vector<double> &inputData) {
+        assert(inputData.size() == netLayers[0].size() - 1);                                // Make sure that number of input values == input layer neurons
+        for(auto index = 0; const auto &id : inputData) netLayers[0][index++].output(id);   // Hold input value in input layer neuron
 
-//         for(int n = 0; n < outputLayer.size()-1; ++n) outputLayer[n].outputGradient(targetData[n]);
-
-
-//         for(int nl = netLayers.size()-2; nl > 0; --nl) {
-//             Layer &hiddenLayer = netLayers[nl];
-//             Layer &nextLayer = netLayers[nl+1];
-
-//             for(int n = 0; n < hiddenLayer.size(); ++n) hiddenLayer[n].hiddenGradient(nextLayer);
-//         }
-
-
-//         // Update connection weights
-//         for(int nl = netLayers.size() - 1; nl > 0; --nl) {  // Fromt outputs to first hidden layer
-//             Layer &currLayer = netLayers[nl];
-//             Layer &prevLayer = netLayers[nl-1];
-
-//             for(int n = 0; n < currLayer.size()-1; ++n) currLayer[n].inputWeights(prevLayer);
-//         }
-//     }
-
-//     void result(std::vector<double> &resultData) const {
-//         resultData.clear();
-//         for(int n = 0; n < netLayers.back().size()-1; ++n) resultData.push_back(netLayers.back()[n].output());
-//     }
-
-//     double avgError() {return recAvgError;}
-
-//     std::vector<Layer> nl() {return netLayers;}
-
-// private:
-//     double netError = 0.0;
-//     double recAvgError = 0.0;
-//     static double recAvgSmoothing;
-
-//     std::vector<Layer> netLayers;  // 2D vector
-// };
+        for(int nl = 1; nl < netLayers.size(); ++nl) {
+            Layer &prevLayer = netLayers[nl-1];
+            for(int n = 0; n < netLayers[nl].size()-1; ++n) netLayers[nl][n].feedForward(prevLayer);
+        }  
+    }
 
 
-// double Network::recAvgSmoothing = 100.0;
-// double Neuron::eta = 0.15;      // Net learning speed  -  0.0 - 1.0
-// double Neuron::alpha = 0.5;     // Multiplier of last weight  -  0.0 - n
+    void backPropagation(const std::vector<double> &targetData) {
+        // Root Mean Sqaure Error (RMSE) - https://en.wikipedia.org/wiki/Root-mean-square_deviation
+        Layer &outputLayer = netLayers.back();
+        netError = 0.0;
+
+        for(int n = 0; n < outputLayer.size()-1; ++n) {
+            double delta = targetData[n] - outputLayer[n].output();
+            netError += delta * delta;
+        }
+
+
+        netError /= outputLayer.size() - 1;     // Get the average
+        netError = sqrt(netError);              // RMS
+
+        // Recent average measure - indicator how well the net is doing
+        recAvgError = (recAvgSmoothing * recAvgSmoothing + netError) / (recAvgSmoothing + 1.0);
+        for(int n = 0; n < outputLayer.size()-1; ++n) outputLayer[n].outputGradient(targetData[n]);
+
+
+        for(int nl = netLayers.size()-2; nl > 0; --nl) {
+            Layer &hiddenLayer = netLayers[nl];
+            Layer &nextLayer = netLayers[nl+1];
+
+            for(int n = 0; n < hiddenLayer.size(); ++n) hiddenLayer[n].hiddenGradient(nextLayer);
+        }
+
+        // Update connection weights
+        for(int nl = netLayers.size() - 1; nl > 0; --nl) {  // Fromt outputs to first hidden layer
+            Layer &currLayer = netLayers[nl];
+            Layer &prevLayer = netLayers[nl-1];
+
+            for(int n = 0; n < currLayer.size()-1; ++n) currLayer[n].inputWeights(prevLayer);
+        }
+    }
+
+    void result(std::vector<double> &resultData) const {
+        resultData.clear();
+        for(int n = 0; n < netLayers.back().size()-1; ++n) resultData.push_back(netLayers.back()[n].output());
+    }
+
+    double avgError() {return recAvgError;}
+
+private:
+    double netError = 0.0;
+    double recAvgError = 0.0;
+    static double recAvgSmoothing;
+
+    std::vector<Layer> netLayers;  // 2D vector
+};
+
+
+double Network::recAvgSmoothing = 100.0;
+double Neuron::eta = 0.15;      // Net learning speed  -  0.0 - 1.0
+double Neuron::alpha = 0.5;     // Multiplier of last weight  -  0.0 - n
 
 auto main() -> int {
     // Topology {X, Y, Z} - X inputs, Y neurons in hidden layer, Z outputs
-    std::vector<int> topology{15, 5, 5, 5, 3};
+    std::vector<int> topology{2, 4, 1};
     Network net(topology);
 
     std::vector<double> inputData;
@@ -222,8 +210,8 @@ auto main() -> int {
     std::string label;  std::string line;
     
     int iteration = 0;
-    while(iteration++ != 100000) {
-        file.open("num-some.txt");
+    while(iteration++ != 1) {
+        file.open("or-control.txt");
         std::cout << "\nStarting iteration " << iteration << std::endl;
 
         while(!file.eof()) {
@@ -231,11 +219,11 @@ auto main() -> int {
             std::stringstream ss(line);
             ss >> label;
 
-            if(label.compare("desc:") == 0) {
-                labels.clear();
-                int num = 0;
-                while(ss >> num) labels.push_back(num);
-            }
+            // if(label.compare("desc:") == 0) {
+            //     labels.clear();
+            //     int num = 0;
+            //     while(ss >> num) labels.push_back(num);
+            // }
 
             if(label.compare("in:") == 0) {
                 inputData.clear();
@@ -252,9 +240,9 @@ auto main() -> int {
             if(inputData.size() <= 0 || targetData.size() <= 0) continue;
 
 
-            std::cout << std::endl;
-            std::cout << "Number: ";
-            for(const auto &l : labels) std::cout << l << std::endl;
+            // std::cout << std::endl;
+            // std::cout << "Number: ";
+            // for(const auto &l : labels) std::cout << l << std::endl;
 
             std::cout << "Input: ";
             for(const auto &id : inputData) std::cout << std::fixed << std::setprecision(1) << id << " ";
