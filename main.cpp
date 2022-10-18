@@ -193,11 +193,11 @@ private:
 
 double Network::recAvgSmoothing = 100.0;
 double Neuron::eta = 0.15;      // Net learning speed  -  0.0 - 1.0
-double Neuron::alpha = 0.15;     // Multiplier of last weight  -  0.0 - n
+double Neuron::alpha = 0.5;     // Multiplier of last weight  -  0.0 - n
 
 auto main() -> int {
     // Topology {X, Y, Z} - X inputs, Y neurons in hidden layer, Z outputs
-    std::vector<int> topology{2, 4, 1};
+    std::vector<int> topology{15, 15, 10};
     Network net(topology);
 
 
@@ -209,8 +209,8 @@ auto main() -> int {
     std::vector<double> inputData;
     std::vector<double> targetData;
     std::vector<double> resultData;
+    std::vector<std::string> labels;
     std::vector<SerialisedOutput> resultDataSerialised;
-    std::vector<int> labels;
 
 
     std::ifstream file;
@@ -220,20 +220,21 @@ auto main() -> int {
     int passCounter = 0;
     int failCounter = 0;
 
-    while(iteration++ != 3000) {
-        file.open("or-control.txt");
+    int cnt = 0;
+    while(iteration++ != 20000) {
+        file.open("nums.txt");
         std::cout << "\nStarting iteration " << iteration << std::endl;
 
         while(!file.eof()) {
-            getline(file, line);
+            getline(file, line);  cnt++;
             std::stringstream ss(line);
             ss >> label;
 
-            // if(label.compare("desc:") == 0) {
-            //     labels.clear();
-            //     int num = 0;
-            //     while(ss >> num) labels.push_back(num);
-            // }
+            if(label.compare("desc:") == 0) {
+                labels.clear();
+                std::string desc;
+                while(ss >> desc) labels.push_back(desc);
+            }
 
             if(label.compare("in:") == 0) {
                 inputData.clear();
@@ -251,9 +252,9 @@ auto main() -> int {
             // Guard clause
             if(inputData.size() <= 0 || targetData.size() <= 0) continue;
 
-            // std::cout << std::endl;
-            // std::cout << "Number: ";
-            // for(const auto &l : labels) std::cout << l << std::endl;
+            std::cout << std::endl;
+            std::cout << "Number: ";
+            for(const auto &l : labels) std::cout << l << std::endl;
 
             std::cout << "Input: ";
             for(const auto &id : inputData) std::cout << std::fixed << std::setprecision(1) << id << " ";
@@ -264,7 +265,7 @@ auto main() -> int {
             std::cout << std::endl;
             for(const auto &rd : resultData) {
                 std::cout << "Output: " << std::fixed << std::setprecision(4) << rd << " ";
-                if(rd > 0.95) {
+                if(rd > 0.90) {
                     std::cout << "PASS" << std::endl;
                     passCounter++;
                 } else {
@@ -277,17 +278,21 @@ auto main() -> int {
                 resultDataSerialised.back().data = rd;
             }
 
-            for(const auto &td : targetData) std::cout << "Target: " << std::fixed << std::setprecision(4) << td << " ";
-            std::cout << std::endl << std::endl;
+
+            for(const auto &td : targetData) std::cout << "Target: " << std::fixed << std::setprecision(4) << td << " " << std::endl;;
+            std::cout << std::endl;
 
             net.backPropagation(targetData);
             std::cout << "Avg Error: " << net.avgError() << std::endl << std::endl;
+
+            inputData.clear();
+            targetData.clear();
         } 
 
         std::cout << "End of iteration " << iteration << std::endl;
         std::cout << "Passed " << passCounter << " times" << std::endl;
         std::cout << "Failed " << failCounter << " times" << std::endl;
-        
+
         file.close();
         file.clear();
         file.seekg(0, std::ios::beg);
