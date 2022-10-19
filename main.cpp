@@ -4,15 +4,31 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <utility>
+#include <iterator>
 
 
 #include <cstdlib>
 #include <cassert>
 #include <cmath>
 
+#define TRESHOLD    0.91
+#define ITERATIONS  1
+#define ETA         0.15
+#define ALPHA       0.50
+#define SMOOTHING   100.0
+#define FILE        "nums.txt"
+#define OFFSET      15
+
 
 class Neuron;
 typedef std::vector<Neuron> Layer;
+
+
+struct TrainedWeightsTrsh {
+    int id;
+    std::vector<double> data; 
+};
 
 
 class Connection {
@@ -39,8 +55,12 @@ public:
     Neuron(int outputs, int nID){
         for(int o = 0; o < outputs; ++o) _weights.push_back(Connection());
         _nID = nID;
+
+        // if(knownWeights.size() > 0) std::copy(knownWeights.begin(), knownWeights.end(), std::back_inserter(_knownWeights));
     }
 
+    int id() {return _nID;}
+    double weight() const {return _weights[_nID].weight();}
 
     void feedForward(const Layer &prevLayer) {
         double sum = 0.0;
@@ -66,14 +86,21 @@ public:
     void inputWeights(Layer &prevLayer) {
         for(int n = 0; n < prevLayer.size(); ++n) {
             Neuron &neuron = prevLayer[n];
-            double oldWeight = neuron._weights[_nID].weightChange();
-            double newWeight = eta * neuron.output() * _gradient + alpha * oldWeight;
 
-            double buff = neuron._weights[_nID].weight();
-            buff += newWeight;
+            // if(_knownWeights.size() > 0) {
+                // if(n <= 0) neuron._weights[_nID].weight(_knownWeights[n]);
+                // else neuron._weights[_nID].weight(_knownWeights[n+OFFSET]);
+            // }
+            // else {
+                double oldWeight = neuron._weights[_nID].weightChange();
+                double newWeight = eta * neuron.output() * _gradient + alpha * oldWeight;
 
-            neuron._weights[_nID].weightChange(newWeight);
-            neuron._weights[_nID].weight(buff);
+                double buff = neuron._weights[_nID].weight();
+                buff += newWeight;
+
+                neuron._weights[_nID].weightChange(newWeight);
+                neuron._weights[_nID].weight(buff);   
+            // }
         }
     }
 
@@ -90,8 +117,8 @@ private:
     static double eta;
     static double alpha;
 
+    // std::vector<double> _knownWeights;
     std::vector<Connection> _weights;
-
 
     // Hyperbolic tanget function - https://en.wikipedia.org/wiki/Hyperbolic_functions#Hyperbolic_tangent
     // Scalling output between -1.0 and 1.0
@@ -113,14 +140,16 @@ double Neuron::transferDeriv(double x) {return 1.0 - x*x;}
 
 class Network {
 public:
-    Network(const std::vector<int> &topology) {
+    Network(const std::vector<int> &topology, std::vector<Layer> knownWeights = std::vector<Layer>()) {
         for(int t = 0; t < topology.size(); ++t) {      // I need integer iterator for nested loop, hence there's no ranged-for or vector iterators
             netLayers.push_back(Layer());
             int outputs = (t == topology.size()-1) ? 0 : topology[t+1];     // If it's output layer, we don't need a neuron to have its own output
                                                                             // `t+1` because we want `Layer 1' neurons to have `Layer 2` neurons count outputs 
 
-            for(int n = 0; n <= topology[t]; ++n) {                 // Adding one more neuron than declared - `bias neuron` - not needed in ouput layer
-                netLayers.back().push_back(Neuron(outputs, n));     // Push neuron to latest added layer
+            for(int n = 0; n <= topology[t]; ++n) {     // Adding one more neuron than declared - `bias neuron` - not needed in ouput layer
+                // if(knownWeights.size() > 0) netLayers.back().push_back(Neuron(outputs, n, knownWeights));     // Push neuron to latest added layer and pass known, good weights
+                if(knownWeights.size() > 0) std::copy(netLayers.begin(), netLayers.end(), std::back_inserter(knownWeights));
+                netLayers.back().push_back(Neuron(outputs, n));                                          // Push neuron to latest added layer
                 std::cout << "Added " << n+1 << "th neuron to layer " << t+1 << std::endl;
             }
 
@@ -175,9 +204,30 @@ public:
         }
     }
 
-    void result(std::vector<double> &resultData) const {
+    void result(std::vector<double> &resultData, std::vector<Layer> &trainedWeights) {
         resultData.clear();
-        for(int n = 0; n < netLayers.back().size()-1; ++n) resultData.push_back(netLayers.back()[n].output());
+        for(int n = 0; n < netLayers.back().size()-1; ++n) {
+            resultData.push_back(netLayers.back()[n].output());
+            
+            // if(netLayers.back()[n].output() >= TRESHOLD) {
+                // !!! C++20 !!!
+                for(auto index = 0; auto &nl : netLayers) {
+                    if(index++ == netLayers.size()-1) break;
+                    if(trainedWeights.size() > 100) trainedWeights.clear();
+                    trainedWeights.push_back(nl);
+                }
+            // }
+        
+            // if(netLayers.back()[n].output() >= TRESHOLD) {
+            //     for(auto index = 0; const auto &nl : netLayers) {
+            //         if(index++ == netLayers.size()-1) break;
+
+            //         trainedWeights.push_back(TrainedWeightsTrsh());
+            //         trainedWeights.back().id = n;
+            //         trainedWeights.back().data.push_back(nl.back().weight());
+            //     }
+            // }
+        }
     }
 
     double avgError() {return recAvgError;}
@@ -191,14 +241,32 @@ private:
 };
 
 
-double Network::recAvgSmoothing = 100.0;
-double Neuron::eta = 0.15;      // Net learning speed  -  0.0 - 1.0
-double Neuron::alpha = 0.5;     // Multiplier of last weight  -  0.0 - n
+double Network::recAvgSmoothing = SMOOTHING;
+double Neuron::eta = ETA;       // Net learning speed  -  0.0 - 1.0
+double Neuron::alpha = ALPHA;   // Multiplier of last weight  -  0.0 - n
 
 auto main() -> int {
     // Topology {X, Y, Z} - X inputs, Y neurons in hidden layer, Z outputs
+    // std::vector<int> topology{2, 4, 1};
     std::vector<int> topology{15, 15, 10};
-    Network net(topology);
+
+    std::ifstream kwni("./known-weight-nums.bin", std::ios::binary);
+    kwni.unsetf(std::ios::skipws);
+    
+    std::streampos fileSize;
+        kwni.seekg(0, std::ios::end);
+        fileSize = kwni.tellg();
+        kwni.seekg(0, std::ios::beg);
+    std::vector<Layer> knownWeights; knownWeights.resize(fileSize);
+    for(int i = 0; i < fileSize; i++) kwni.read((char *) &knownWeights[i], sizeof(Neuron)); kwni.close();
+    // // knownWeights.insert(knownWeights.begin(), 
+    // //                     std::istream_iterator<Layer>(kwni),
+    // //                     std::istream_iterator<Layer>());
+    if(!kwni.good()) std::cout << "[ERROR]" << " Read from file has failed!" << std::endl;
+    
+
+    Network net(topology, knownWeights);
+    // Network net(topology);
 
 
     struct SerialisedOutput {
@@ -209,7 +277,9 @@ auto main() -> int {
     std::vector<double> inputData;
     std::vector<double> targetData;
     std::vector<double> resultData;
+
     std::vector<std::string> labels;
+    std::vector<Layer> trainedWeights;
     std::vector<SerialisedOutput> resultDataSerialised;
 
 
@@ -221,8 +291,8 @@ auto main() -> int {
     int failCounter = 0;
 
     int cnt = 0;
-    while(iteration++ != 20000) {
-        file.open("nums.txt");
+    while(iteration++ != ITERATIONS) {
+        file.open(FILE);
         std::cout << "\nStarting iteration " << iteration << std::endl;
 
         while(!file.eof()) {
@@ -260,12 +330,12 @@ auto main() -> int {
             for(const auto &id : inputData) std::cout << std::fixed << std::setprecision(1) << id << " ";
 
             net.feedForward(inputData);
-            net.result(resultData);
+            net.result(resultData, trainedWeights);
 
             std::cout << std::endl;
             for(const auto &rd : resultData) {
                 std::cout << "Output: " << std::fixed << std::setprecision(4) << rd << " ";
-                if(rd > 0.90) {
+                if(rd >= TRESHOLD) {
                     std::cout << "PASS" << std::endl;
                     passCounter++;
                 } else {
@@ -290,12 +360,53 @@ auto main() -> int {
         } 
 
         std::cout << "End of iteration " << iteration << std::endl;
-        std::cout << "Passed " << passCounter << " times" << std::endl;
-        std::cout << "Failed " << failCounter << " times" << std::endl;
-
+        
         file.close();
         file.clear();
         file.seekg(0, std::ios::beg);
     }
+
+    std::cout << "Passed " << passCounter << " times" << std::endl;
+    std::cout << "Failed " << failCounter << " times" << std::endl;
+
+    
+    // std::ofstream kwno("./known-weight-nums.bin", std::ios::binary);
+    // kwno.unsetf(std::ios::skipws);
+    // for(const auto &tw : trainedWeights) kwno.write((char *) &tw, sizeof(Neuron)); kwno.close();
+    // if(!kwno.good()) std::cout << "[ERROR] Writing to file has failed" << std::endl;
+
+
+    std::cout << std::endl << "Trained weights: " << std::endl;
+    for(int row = 0; row < trainedWeights.size()-1; ++row) {
+        std::cout << std::left << std::setw(2) << row << ":  ";
+
+        for(int col = 0; col < trainedWeights[row].size()-1; ++col) {
+            std::cout << std::left << std::setw(8) << trainedWeights[row][col].weight() << std::left << std::setw(1) << ", ";
+        } 
+        
+        std::cout << std::endl;
+    }
+
+
+
+    // int kgwCnt = 0;
+    // std::cout << std::endl << "Trained, good weights: " << std::endl;
+    // for(int row = trainedWeights.size()-1; row >= 0; --row) {
+    //     std::cout << std::endl << std::left << std::setw(8) << "Input: ";
+    //     for(int tw = 0; tw < trainedWeights.back().size()-1; ++tw) {
+    //         std::cout << trainedWeights[row][tw].id() << " ";
+    //         std::cout << std::left << std::setw(8) << trainedWeights[row][tw].weight() << std::setw(1) << ", ";
+    //     } 
+    // } std::cout << std::endl;
+
+    // int kgwCnt = 0;
+    // std::cout << std::endl << "Known, good weights: " << std::endl;
+    // for(int row = trainedWeights.size()-1; row > trainedWeights.size()-3; --row) {
+    //     std::cout << std::endl << std::left << std::setw(7) << "Input " << kgwCnt++ << " ";
+    //     for(int tw = 0; tw < trainedWeights[row].size()-1; ++tw) {
+    //         std::cout << std::left << std::setw(7) << trainedWeights[row][tw].weight();
+    //     }
+    // } std::cout << std::endl;
+
     return 0;
 }
