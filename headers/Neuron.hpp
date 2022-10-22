@@ -4,18 +4,27 @@
 
 #include "Connection.hpp"
 
+#define ETA         0.15
+#define ALPHA       0.50
+
 class Neuron;
 typedef std::vector<Neuron> Layer;
 
 class Neuron {
 public:
+    // Neuron.cpp
     Neuron(int outputs, int nID);
-    ~Neuron();
 
+    void inputWeights(Layer &prevLayer);
     void feedForward(const Layer &prevLayer);
+
     void outputGradient(double targetData);
     void hiddenGradient(const Layer &nextLayer);
-    void inputWeights(Layer &prevLayer);
+    // ~Neuron.cpp
+    
+
+    int id() {return _nID;}
+    double weight() const {return _weights[_nID].weight();}
 
     void output(double outputs) {_output = outputs;}
     double output() const {return _output;}
@@ -33,8 +42,7 @@ private:
 
     // Hyperbolic tanget function - https://en.wikipedia.org/wiki/Hyperbolic_functions#Hyperbolic_tangent
     // Scalling output between -1.0 and 1.0
-    static double transfer(double x) {return tanh(x);}
-    static double transferDeriv(double x) {return 1.0 - x * x;}   // Very close approximation
-
+    static double transfer(double x);
+    static double transferDeriv(double x);   // Very close approximation
     double sumDOW(const Layer &nextLayer) const;
 };

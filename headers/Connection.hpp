@@ -3,15 +3,14 @@
 
 class Connection {
 public:
-    Connection();
-    ~Connection();
+    Connection() {_weight = randomizeWeight();}     // Assing random weight - to be trained
 
 
-    void weight(double weight);
-    double weight() const;
+    void weight(double weight) {_weight = weight;}
+    double weight() const {return _weight;}
 
-    void weightChange(double weightChange);
-    double weightChange() const;
+    void weightChange(double weightChange) {_weightChange = weightChange;}
+    double weightChange() const {return _weightChange;}
 
 private:
     double _weight;
