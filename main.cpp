@@ -1,3 +1,6 @@
+#include <SFML/Graphics.hpp>
+#include <SFML/Window.hpp>
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -6,14 +9,21 @@
 #include <iomanip>
 #include <utility>
 #include <iterator>
-
+#include <memory>
+#include <algorithm>
 
 #include <cstdlib>
 #include <cassert>
 #include <cmath>
 
-#define TRESHOLD    0.91
-#define ITERATIONS  1
+
+#define Rect sf::RectangleShape
+#define R_WIDTH 50
+#define R_HEIGHT 50
+
+
+#define TRESHOLD    0.90
+#define ITERATIONS  20000
 #define ETA         0.15
 #define ALPHA       0.50
 #define SMOOTHING   100.0
@@ -250,29 +260,24 @@ auto main() -> int {
     // std::vector<int> topology{2, 4, 1};
     std::vector<int> topology{15, 15, 10};
 
-    std::ifstream kwni("./known-weight-nums.bin", std::ios::binary);
-    kwni.unsetf(std::ios::skipws);
+    // std::ifstream kwni("./known-weight-nums.bin", std::ios::binary);
+    // kwni.unsetf(std::ios::skipws);
     
-    std::streampos fileSize;
-        kwni.seekg(0, std::ios::end);
-        fileSize = kwni.tellg();
-        kwni.seekg(0, std::ios::beg);
-    std::vector<Layer> knownWeights; knownWeights.resize(fileSize);
-    for(int i = 0; i < fileSize; i++) kwni.read((char *) &knownWeights[i], sizeof(Neuron)); kwni.close();
-    // // knownWeights.insert(knownWeights.begin(), 
-    // //                     std::istream_iterator<Layer>(kwni),
-    // //                     std::istream_iterator<Layer>());
-    if(!kwni.good()) std::cout << "[ERROR]" << " Read from file has failed!" << std::endl;
+    // std::streampos fileSize;
+    //     kwni.seekg(0, std::ios::end);
+    //     fileSize = kwni.tellg();
+    //     kwni.seekg(0, std::ios::beg);
+    // std::vector<Layer> knownWeights; knownWeights.resize(fileSize);
+    // for(int i = 0; i < fileSize; i++) kwni.read((char *) &knownWeights[i], sizeof(Neuron)); kwni.close();
+    // knownWeights.insert(knownWeights.begin(), 
+    //                     std::istream_iterator<Layer>(kwni),
+    //                     std::istream_iterator<Layer>());
+    // if(!kwni.good()) std::cout << "[ERROR]" << " Read from file has failed!" << std::endl;
     
 
-    Network net(topology, knownWeights);
-    // Network net(topology);
+    // Network net(topology, knownWeights);
+    Network net(topology);
 
-
-    struct SerialisedOutput {
-        int iteration;
-        double data;
-    };
 
     std::vector<double> inputData;
     std::vector<double> targetData;
@@ -280,7 +285,6 @@ auto main() -> int {
 
     std::vector<std::string> labels;
     std::vector<Layer> trainedWeights;
-    std::vector<SerialisedOutput> resultDataSerialised;
 
 
     std::ifstream file;
@@ -318,12 +322,10 @@ auto main() -> int {
                 while(ss >> val) targetData.push_back(val);
             }
 
+            if(inputData.size() <= 0 || targetData.size() <= 0) continue;   // Guard clause
 
-            // Guard clause
-            if(inputData.size() <= 0 || targetData.size() <= 0) continue;
 
-            std::cout << std::endl;
-            std::cout << "Number: ";
+            std::cout << std::endl << "Number: ";
             for(const auto &l : labels) std::cout << l << std::endl;
 
             std::cout << "Input: ";
@@ -342,10 +344,6 @@ auto main() -> int {
                     std::cout << "FAIL" << std::endl;
                     failCounter++;
                 }
-                
-                resultDataSerialised.push_back(SerialisedOutput());
-                resultDataSerialised.back().iteration = iteration;
-                resultDataSerialised.back().data = rd;
             }
 
 
@@ -386,6 +384,127 @@ auto main() -> int {
         
         std::cout << std::endl;
     }
+
+
+    sf::RenderWindow app;
+        app.create(sf::VideoMode(800, 600, 32), "Retina");
+        app.setFramerateLimit(60);
+
+    int xPos = 25;
+    int yPos = 25;
+
+    sf::Color originalColor(211, 211, 211);
+    std::vector<std::vector<Rect>> retina;  retina.resize(150);
+
+    for(int i = 0; i != 5; ++i) {
+        for(int j = 0; j != 3; ++j) {
+            Rect field;
+                field.setPosition(xPos, yPos);
+                field.setSize(sf::Vector2f(R_WIDTH, R_HEIGHT));
+                field.setFillColor(originalColor);
+                field.setOutlineThickness(2.0f);
+                field.setOutlineColor(sf::Color::Black);
+
+            retina[i].push_back(field);
+            xPos += R_WIDTH;
+        } 
+        
+        yPos += R_HEIGHT;
+        xPos = 25;
+    }
+
+
+    Rect resetButton;
+        resetButton.setPosition(xPos, yPos + R_HEIGHT);
+        resetButton.setSize(sf::Vector2f((R_WIDTH*2), R_HEIGHT));
+        resetButton.setFillColor(sf::Color::Red);
+        resetButton.setOutlineThickness(2.0f);
+        resetButton.setOutlineColor(sf::Color::Black);
+
+    Rect resultButton;
+        resultButton.setPosition(xPos+(R_WIDTH*3), yPos + R_HEIGHT);
+        resultButton.setSize(sf::Vector2f((R_WIDTH*2), R_HEIGHT));
+        resultButton.setFillColor(sf::Color::Green);
+        resultButton.setOutlineThickness(2.0f);
+        resultButton.setOutlineColor(sf::Color::Black);
+
+
+    auto mouse = std::make_unique<sf::Mouse>();
+    int clicked = 0;
+    int i = 15;
+
+    sf::Font font;
+    font.loadFromFile("arial.ttf");
+
+    sf::Text txt;
+        txt.setCharacterSize(32);
+        txt.setFillColor(sf::Color::Black);
+        txt.setFont(font);
+
+
+    inputData.clear();
+    inputData.resize(5*3);
+    while(app.isOpen()) {
+        sf::Event event;
+        while(app.pollEvent(event)) {
+            if(event.type == sf::Event::Closed) app.close();
+        } app.clear(sf::Color(230, 230, 230));
+
+    
+        float mouseX = mouse->getPosition(app).x;
+        float mouseY = mouse->getPosition(app).y;
+        
+        if(sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            i = 15;
+            while(i != 0) --i;
+
+            clicked = 1;
+        } else clicked = 0;
+
+        app.draw(resetButton);
+        if(resetButton.getGlobalBounds().contains(sf::Vector2f(mouseX, mouseY))) {
+            if(clicked) {
+                for(int i = 0; i != 5; ++i) {
+                    for(int j = 0; j != 3; ++j) {
+                        retina[i][j].setFillColor(originalColor);   
+                        inputData[i*3+j] = 0.0;       
+                    }
+                }
+            }
+        }
+
+
+        for(int i = 0; i < 5; i++) {
+            for(int j = 0; j < 3; j++) {
+                if(retina[i][j].getGlobalBounds().contains(sf::Vector2f(mouseX, mouseY))) {
+                    if(clicked) {
+                        retina[i][j].setFillColor(sf::Color::Black);
+                        inputData[i*3+j] = 1.0;
+                    }
+                } app.draw(retina[i][j]);            
+            }
+        }
+
+        net.feedForward(inputData);
+        net.result(resultData, trainedWeights);
+
+        app.draw(resultButton);
+        if(resultButton.getGlobalBounds().contains(sf::Vector2f(mouseX, mouseY))) {
+            if(clicked) {
+                double key = *std::max_element(resultData.begin(), resultData.end());
+                auto num = std::find(resultData.begin(), resultData.end(), key);
+
+                if(num != resultData.cend())
+                    std::cout << "Most probable number on the screen: " << std::distance(resultData.begin(), num) << std::endl;
+            }
+        }
+
+        app.display();
+    }
+
+
+
+
 
 
 
