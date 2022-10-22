@@ -37,6 +37,20 @@ extern "C" {
 #define OFFSET      15
 
 
+struct {
+    std::string data;
+
+    std::vector<int> topology;
+
+    double treshold;
+    double eta;
+    double alpha;
+    double smoothing;
+
+    int iterations;
+} NET;
+
+
 class Neuron;
 typedef std::vector<Neuron> Layer;
 
@@ -71,8 +85,6 @@ public:
     Neuron(int outputs, int nID){
         for(int o = 0; o < outputs; ++o) _weights.push_back(Connection());
         _nID = nID;
-
-        // if(knownWeights.size() > 0) std::copy(knownWeights.begin(), knownWeights.end(), std::back_inserter(_knownWeights));
     }
 
     int id() {return _nID;}
@@ -103,20 +115,14 @@ public:
         for(int n = 0; n < prevLayer.size(); ++n) {
             Neuron &neuron = prevLayer[n];
 
-            // if(_knownWeights.size() > 0) {
-                // if(n <= 0) neuron._weights[_nID].weight(_knownWeights[n]);
-                // else neuron._weights[_nID].weight(_knownWeights[n+OFFSET]);
-            // }
-            // else {
-                double oldWeight = neuron._weights[_nID].weightChange();
-                double newWeight = eta * neuron.output() * _gradient + alpha * oldWeight;
+            double oldWeight = neuron._weights[_nID].weightChange();
+            double newWeight = eta * neuron.output() * _gradient + alpha * oldWeight;
 
-                double buff = neuron._weights[_nID].weight();
-                buff += newWeight;
+            double buff = neuron._weights[_nID].weight();
+            buff += newWeight;
 
-                neuron._weights[_nID].weightChange(newWeight);
-                neuron._weights[_nID].weight(buff);   
-            // }
+            neuron._weights[_nID].weightChange(newWeight);
+            neuron._weights[_nID].weight(buff);   
         }
     }
 
@@ -225,24 +231,12 @@ public:
         for(int n = 0; n < netLayers.back().size()-1; ++n) {
             resultData.push_back(netLayers.back()[n].output());
             
-            // if(netLayers.back()[n].output() >= TRESHOLD) {
-                // !!! C++20 !!!
-                for(auto index = 0; auto &nl : netLayers) {
-                    if(index++ == netLayers.size()-1) break;
-                    if(trainedWeights.size() > 100) trainedWeights.clear();
-                    trainedWeights.push_back(nl);
-                }
-            // }
-        
-            // if(netLayers.back()[n].output() >= TRESHOLD) {
-            //     for(auto index = 0; const auto &nl : netLayers) {
-            //         if(index++ == netLayers.size()-1) break;
-
-            //         trainedWeights.push_back(TrainedWeightsTrsh());
-            //         trainedWeights.back().id = n;
-            //         trainedWeights.back().data.push_back(nl.back().weight());
-            //     }
-            // }
+            // !!! C++20 !!!
+            for(auto index = 0; auto &nl : netLayers) {
+                if(index++ == netLayers.size()-1) break;
+                if(trainedWeights.size() > 100) trainedWeights.clear();
+                trainedWeights.push_back(nl);
+            }
         }
     }
 
@@ -261,44 +255,64 @@ double Network::recAvgSmoothing = SMOOTHING;
 double Neuron::eta = ETA;       // Net learning speed  -  0.0 - 1.0
 double Neuron::alpha = ALPHA;   // Multiplier of last weight  -  0.0 - n
 
+void luaTable(lua_State *lua) {
+    lua_pushnil(lua);
+    while(lua_next(lua, -2) != 0) {
+        if(lua_isnumber(lua, -1)) NET.topology.push_back(lua_tointeger(lua, -1));
+        else luaTable(lua);
+
+        lua_pop(lua, 1);
+    } 
+}
+
 auto main() -> int {
-    std::vector<int> topology;
-
-
-    std::ifstream file;  file.open(FILE);
-    std::string label;   std::string line;
-
-    getline(file, line);
-    std::cout << line << std::endl;
-
-
     lua_State *lua = luaL_newstate();   // LUA VM
-    int t = luaL_dostring(lua, line.c_str());
+    luaL_openlibs(lua);
 
+    int t = luaL_dofile(lua, "net-control.lua");
     if(t == LUA_OK) {
-        lua_getglobal(lua, "topology");
+        lua_getglobal(lua, "netSettings");
         if(lua_istable(lua, -1)) {
+            lua_pushstring(lua, "Data");
+            lua_gettable(lua, -2);
+            NET.data = lua_tostring(lua, -1);
+            lua_pop(lua, 1); 
 
-            lua_pushnil(lua);
-            lua_next(lua, -2);
-            int key = lua_tointeger(lua, -2);
-            int val = lua_tointeger(lua, -1);
+            lua_pushstring(lua, "Treshold");
+            lua_gettable(lua, -2);
+            NET.treshold = (double)lua_tonumber(lua, -1);
+            lua_pop(lua, 1); 
 
-            std::cout << key << ": " << val << std::endl;
+            lua_pushstring(lua, "Iterations");
+            lua_gettable(lua, -2);
+            NET.iterations = (int)lua_tonumber(lua, -1);
+            lua_pop(lua, 1); 
+
+            lua_pushstring(lua, "ETA");
+            lua_gettable(lua, -2);
+            NET.eta = (double)lua_tonumber(lua, -1);
+            lua_pop(lua, 1); 
+
+            lua_pushstring(lua, "Alpha");
+            lua_gettable(lua, -2);
+            NET.alpha = (double)lua_tonumber(lua, -1);
+            lua_pop(lua, 1); 
+
+            lua_pushstring(lua, "Smoothing");
+            lua_gettable(lua, -2);
+            NET.smoothing = (double)lua_tonumber(lua, -1);
+            lua_pop(lua, 1); 
+
+            lua_pushstring(lua, "Topology");
+            lua_gettable(lua, -2);
+            luaTable(lua);
         }
-    }
-    else {
+
+    } else {
         std::string err = lua_tostring(lua, -1);
         std::cout << err << std::endl;
     }
 
-    lua_close(lua);
-    return 1;
-
-
-    // Topology {X, Y, Z} - X inputs, Y neurons in hidden layer, Z outputs
-    // std::vector<int> topology{2, 4, 1};
-    // std::vector<int> topology{15, 15, 10};
 
     // std::ifstream kwni("./known-weight-nums.bin", std::ios::binary);
     // kwni.unsetf(std::ios::skipws);
@@ -315,8 +329,9 @@ auto main() -> int {
     // if(!kwni.good()) std::cout << "[ERROR]" << " Read from file has failed!" << std::endl;
     
 
+    // Topology {X, Y, Z} - X inputs, Y neurons in hidden layer, Z outputs
     // Network net(topology, knownWeights);
-    Network net(topology);
+    Network net(NET.topology);
 
 
     std::vector<double> inputData;
@@ -331,9 +346,13 @@ auto main() -> int {
     int passCounter = 0;
     int failCounter = 0;
 
+
+    std::ifstream file;
+    std::string label;   std::string line;
+
     int cnt = 0;
-    while(iteration++ != ITERATIONS) {
-        file.open(FILE);
+    while(iteration++ != NET.iterations) {
+        file.open(NET.data);
         std::cout << "\nStarting iteration " << iteration << std::endl;
 
         while(!file.eof()) {
@@ -374,7 +393,7 @@ auto main() -> int {
             std::cout << std::endl;
             for(const auto &rd : resultData) {
                 std::cout << "Output: " << std::fixed << std::setprecision(4) << rd << " ";
-                if(rd >= TRESHOLD) {
+                if(rd >= NET.treshold) {
                     std::cout << "PASS" << std::endl;
                     passCounter++;
                 } else {
@@ -421,6 +440,7 @@ auto main() -> int {
         
         std::cout << std::endl;
     }
+
 
 
     sf::RenderWindow app;
@@ -539,30 +559,6 @@ auto main() -> int {
         app.display();
     }
 
-
-
-
-
-
-
-    // int kgwCnt = 0;
-    // std::cout << std::endl << "Trained, good weights: " << std::endl;
-    // for(int row = trainedWeights.size()-1; row >= 0; --row) {
-    //     std::cout << std::endl << std::left << std::setw(8) << "Input: ";
-    //     for(int tw = 0; tw < trainedWeights.back().size()-1; ++tw) {
-    //         std::cout << trainedWeights[row][tw].id() << " ";
-    //         std::cout << std::left << std::setw(8) << trainedWeights[row][tw].weight() << std::setw(1) << ", ";
-    //     } 
-    // } std::cout << std::endl;
-
-    // int kgwCnt = 0;
-    // std::cout << std::endl << "Known, good weights: " << std::endl;
-    // for(int row = trainedWeights.size()-1; row > trainedWeights.size()-3; --row) {
-    //     std::cout << std::endl << std::left << std::setw(7) << "Input " << kgwCnt++ << " ";
-    //     for(int tw = 0; tw < trainedWeights[row].size()-1; ++tw) {
-    //         std::cout << std::left << std::setw(7) << trainedWeights[row][tw].weight();
-    //     }
-    // } std::cout << std::endl;
-
+    lua_close(lua);
     return 0;
 }
