@@ -16,6 +16,12 @@
 #include <cassert>
 #include <cmath>
 
+extern "C" {
+    #include <lua.h>
+    #include <lauxlib.h>
+    #include <lualib.h>
+}
+ 
 
 #define Rect sf::RectangleShape
 #define R_WIDTH 50
@@ -27,7 +33,7 @@
 #define ETA         0.15
 #define ALPHA       0.50
 #define SMOOTHING   100.0
-#define FILE        "nums.txt"
+#define FILE        "or-control.txt"
 #define OFFSET      15
 
 
@@ -256,9 +262,43 @@ double Neuron::eta = ETA;       // Net learning speed  -  0.0 - 1.0
 double Neuron::alpha = ALPHA;   // Multiplier of last weight  -  0.0 - n
 
 auto main() -> int {
+    std::vector<int> topology;
+
+
+    std::ifstream file;  file.open(FILE);
+    std::string label;   std::string line;
+
+    getline(file, line);
+    std::cout << line << std::endl;
+
+
+    lua_State *lua = luaL_newstate();   // LUA VM
+    int t = luaL_dostring(lua, line.c_str());
+
+    if(t == LUA_OK) {
+        lua_getglobal(lua, "topology");
+        if(lua_istable(lua, -1)) {
+
+            lua_pushnil(lua);
+            lua_next(lua, -2);
+            int key = lua_tointeger(lua, -2);
+            int val = lua_tointeger(lua, -1);
+
+            std::cout << key << ": " << val << std::endl;
+        }
+    }
+    else {
+        std::string err = lua_tostring(lua, -1);
+        std::cout << err << std::endl;
+    }
+
+    lua_close(lua);
+    return 1;
+
+
     // Topology {X, Y, Z} - X inputs, Y neurons in hidden layer, Z outputs
     // std::vector<int> topology{2, 4, 1};
-    std::vector<int> topology{15, 15, 10};
+    // std::vector<int> topology{15, 15, 10};
 
     // std::ifstream kwni("./known-weight-nums.bin", std::ios::binary);
     // kwni.unsetf(std::ios::skipws);
@@ -286,9 +326,6 @@ auto main() -> int {
     std::vector<std::string> labels;
     std::vector<Layer> trainedWeights;
 
-
-    std::ifstream file;
-    std::string label;  std::string line;
     
     int iteration = 0;
     int passCounter = 0;
