@@ -68,7 +68,7 @@ void Network::backPropagation(const std::vector<double> &targetData) {
     } return;
 }
 
-void Network::result(std::vector<double> &resultData, std::vector<Layer> &trainedWeights) {
+void Network::result(std::vector<double> &resultData) {
     resultData.clear();
     for(int n = 0; n < netLayers.back().size()-1; ++n) {
         resultData.push_back(netLayers.back()[n].output());
@@ -76,8 +76,6 @@ void Network::result(std::vector<double> &resultData, std::vector<Layer> &traine
         // !!! C++20 !!!
         for(auto index = 0; auto &nl : netLayers) {
             if(index++ == netLayers.size()-1) break;
-            if(trainedWeights.size() > 100) trainedWeights.clear();
-            trainedWeights.push_back(nl);
         }
     } return;
 }

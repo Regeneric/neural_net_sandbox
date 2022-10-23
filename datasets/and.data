@@ -4,13 +4,13 @@ desc: OFF OFF
 in: 0.0 0.0
 out: 0.0
 
-desc: OFF ON
-in: 0.0 1.0
-out: 1.0
-
 desc: ON OFF
 in: 1.0 0.0
-out: 1.0
+out: 0.0
+
+desc: OFF ON
+in: 0.0 1.0
+out: 0.0
 
 desc: ON ON
 in: 1.0 1.0

@@ -87,6 +87,7 @@
         "ios": "cpp",
         "locale": "cpp",
         "queue": "cpp",
-        "cassert": "cpp"
+        "cassert": "cpp",
+        "__memory": "cpp"
     }
 }

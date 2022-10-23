@@ -13,7 +13,7 @@ public:
 
     void feedForward(const std::vector<double> &inputData);
     void backPropagation(const std::vector<double> &targetData);
-    void result(std::vector<double> &resultData, std::vector<Layer> &trainedWeights);
+    void result(std::vector<double> &resultData);
     // ~Network.cpp
 
     double avgError() {return recAvgError;}
