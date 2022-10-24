@@ -32,7 +32,7 @@ extern "C" {
 #define R_WIDTH 50
 #define R_HEIGHT 50
 
-#define FILE "net-control.lua"
+#define FILE "net-config.lua"
 
 
 bool checkL(lua_State *lua, int l) {
