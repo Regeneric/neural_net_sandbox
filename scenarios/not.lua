@@ -1,12 +1,12 @@
-require "headers/lua/commons"
+require "headers/lua/commons"   -- Option
 
-labels = {}         -- Optional
-topology = {}       -- Mandatory
-inputData = {}      -- Mandatory
+labels     = {}     -- Optional
+topology   = {}     -- Mandatory
+inputData  = {}     -- Mandatory
 targetData = {}     -- Mandatory
 resultData = {}     -- Mandatory
 
-iterations = 3000      -- Mandatory
+iterations = 1000   -- Mandatory
 threshold  = 0.91   -- Optional
 
 failCounter = 0     -- Optional
@@ -29,7 +29,7 @@ function setup()
         -- Looking for `1.0 0.0` etc.
         if string.find(val, "in:") then
             -- inputData = matchVals(val, "%d+%.?%d+")
-            for match in val:gmatch("%d+") do
+            for match in val:gmatch("%d+%.?%d+") do
                 inputData[#inputData+1] = match
             end
         end
@@ -37,7 +37,7 @@ function setup()
         -- Looking for `0.0` etc.
         if string.find(val, "out:") then
             -- targetData = matchVals(val, "%d+%.?%d+")
-            for match in val:gmatch("%d+") do
+            for match in val:gmatch("%d+%.?%d+") do
                 targetData[#targetData+1] = match
             end
         end
@@ -60,15 +60,14 @@ function display(index)
         print("\nStates: "..labels[index])
     end
 
-    print("Input: "..inputData[index+(index-1)])
+    print("Input: "..inputData[index])
     
-    local ind = tonumber(topology[#topology])   -- Number of outputs
-    for i = 1,ind do 
-        if resultData[i] >= threshold then
-            print("Output: "..string.format("%6f", resultData[i]).." PASS")
+    for key,val in pairs(resultData) do 
+        if val >= threshold then
+            print("Output: "..string.format("%6f", val).." PASS")
             passCounter = passCounter+1
         else
-            print("Output: "..string.format("%6f", resultData[i]).." FAIL")
+            print("Output: "..string.format("%6f", val).." FAIL")
             failCounter = failCounter+1
         end
     end

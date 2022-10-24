@@ -1,4 +1,4 @@
-require "headers/lua/commons"
+require "headers/lua/commons"   -- Optional
 
 labels     = {}     -- Optional
 topology   = {}     -- Mandatory
@@ -6,7 +6,7 @@ inputData  = {}     -- Mandatory
 targetData = {}     -- Mandatory
 resultData = {}     -- Mandatory
 
-iterations = 5000  -- Mandatory
+iterations = 20000  -- Mandatory
 threshold  = 0.91   -- Optional
 
 failCounter = 0     -- Optional
@@ -100,10 +100,10 @@ function display(index, iterTo)
     io.write('\n')
     for key,val in pairs(resultData) do
         if val >= threshold then
-            print("Output["..key.."]: "..string.format("%4f", val).." PASS")
+            print("Output["..key.."]:", string.format("%4f", val), "PASS")
             passCounter = passCounter+1
         else
-            print("Output["..key.."]: "..string.format("%4f", val).." FAIL")
+            print("Output["..key.."]:", string.format("%4f", val), "FAIL")
             failCounter = failCounter+1
         end
     end

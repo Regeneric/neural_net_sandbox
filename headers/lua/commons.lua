@@ -23,16 +23,9 @@ function matchVals(val, regex)
 end
 
 
-
 function printTable(table)
     for key,val in pairs(table) do
         print("table["..key.."] "..val)
-    end
-end
-
-function printTableElem(table, index) 
-    for key,val in pairs(table) do
-        if key == index then print(val) end
     end
 end
 

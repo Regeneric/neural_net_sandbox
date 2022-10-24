@@ -59,7 +59,8 @@ void luaTable(lua_State *lua, std::vector<T> &table) {
 }
 
 template <class K, class V>
-void pushLuaTable(lua_State *lua, K key, V &value) {
+void pushLuaTable(lua_State *lua, K key, V &value, int size) {
+    // lua_checkstack(lua, size);
     lua_pushinteger(lua, key);
     lua_pushnumber(lua, value);
     lua_settable(lua, -3);
@@ -107,9 +108,6 @@ auto main() -> int {
     Network net(topology);
     
 
-    int indHelper = 0;
-    int tgtIndHelper = 0;
-
     int currIteration = 0;
     while(currIteration++ != iterations) {
         std::cout << "\nStarting iteration " << currIteration << std::endl; 
@@ -134,17 +132,19 @@ auto main() -> int {
             net.result(resultData);
 
 
+            lua_getglobal(lua, "resultData");
             for(auto index = 1; const auto &rd : resultData) {
-                lua_getglobal(lua, "resultData");
-                pushLuaTable(lua, index++, rd);
+                lua_checkstack(lua, resultData.size());
+                pushLuaTable(lua, index++, rd, targetData.size());
             }
+
 
             lua_getglobal(lua, "display");
             if(lua_isfunction(lua, -1)) { 
                 lua_pushnumber(lua, i+1);
                 lua_pushnumber(lua, topology.front()-1);
                 if(checkL(lua, lua_pcall(lua, 2, 0, 0)));
-            }
+            } 
             
 
             // topology.back() == number of outputs

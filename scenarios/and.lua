@@ -1,8 +1,8 @@
-require "headers/lua/commons"
+require "headers/lua/commons"   -- Optional
 
-labels = {}         -- Optional
-topology = {}       -- Mandatory
-inputData = {}      -- Mandatory
+labels     = {}     -- Optional
+topology   = {}     -- Mandatory
+inputData  = {}     -- Mandatory
 targetData = {}     -- Mandatory
 resultData = {}     -- Mandatory
 
@@ -75,13 +75,12 @@ function display(index)
 
     print("Input: "..inputData[index+(index-1)]..' '..inputData[index*2])
     
-    local ind = tonumber(topology[#topology])   -- Number of outputs
-    for i = 1,ind do 
-        if resultData[i] >= threshold then
-            print("Output: "..string.format("%6f", resultData[i]).." PASS")
+    for key,val in pairs(resultData) do 
+        if val >= threshold then
+            print("Output: "..string.format("%6f", val).." PASS")
             passCounter = passCounter+1
         else
-            print("Output: "..string.format("%6f", resultData[i]).." FAIL")
+            print("Output: "..string.format("%6f", val).." FAIL")
             failCounter = failCounter+1
         end
     end
