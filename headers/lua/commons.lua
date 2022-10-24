@@ -35,3 +35,9 @@ function printTableElem(table, index)
         if key == index then print(val) end
     end
 end
+
+
+local unpack = unpack or table.unpack
+table.slice = function(a, start ,_end)
+    return {unpack(a, start, _end)}
+end

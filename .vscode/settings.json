@@ -88,6 +88,7 @@
         "locale": "cpp",
         "queue": "cpp",
         "cassert": "cpp",
-        "__memory": "cpp"
+        "__memory": "cpp",
+        "filesystem": "cpp"
     }
 }

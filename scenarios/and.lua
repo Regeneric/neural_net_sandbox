@@ -65,7 +65,6 @@ end
 
 
 -- `index` is passed from C++ - iterator over elemnts in single row of inputData
--- `resultData` is passed from C++ - calculated data based on inputs and weights
 function display(index) 
     -- It goes in a loop
     -- index == 1;  index == 2;  index == 3; etc.

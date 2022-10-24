@@ -59,7 +59,7 @@ void luaTable(lua_State *lua, std::vector<T> &table) {
 }
 
 template <class K, class V>
-void pushLuaTable(lua_State *lua, K key, V value) {
+void pushLuaTable(lua_State *lua, K key, V &value) {
     lua_pushinteger(lua, key);
     lua_pushnumber(lua, value);
     lua_settable(lua, -3);
@@ -77,7 +77,7 @@ auto main() -> int {
     
     int iterations  = 0;
     double threshold = 0.0;
-
+    
 
     lua_State *lua = luaL_newstate();
     luaL_openlibs(lua);
@@ -106,38 +106,56 @@ auto main() -> int {
 
     Network net(topology);
     
+
+    int indHelper = 0;
+    int tgtIndHelper = 0;
+
     int currIteration = 0;
     while(currIteration++ != iterations) {
-        std::cout << "\nStarting iteration " << currIteration << std::endl;
+        std::cout << "\nStarting iteration " << currIteration << std::endl; 
 
         int inpDivider = topology.front();     // We don't number of inputs during compilation
-        int forDivider = inputData.size()/inpDivider;
-
-        int iterTo = (inpDivider) > 1 ? (inputData.size()/forDivider+1) : inputData.size()/forDivider;
+        int iterTo = inputData.size()/inpDivider-1;
 
         std::vector<double> inpBuff;
+        std::vector<double> tgtBuff;
+
         for(int i = 0; i <= iterTo; i++) {
+            // topology.front() == number of inputs
+            int offsetBgn = topology.front()*i;
+            int offsetEnd = topology.front()*(i+1);
+
             inpBuff.clear();
-            if(inpDivider > 1) {
-                inpBuff.push_back((double)inputData[i*2]);
-                inpBuff.push_back((double)inputData[(i*2)+1]);
-            } else inpBuff.push_back((double)inputData[i]);
+            std::copy(inputData.begin()+offsetBgn, 
+                      inputData.begin()+offsetEnd, 
+                      std::back_inserter(inpBuff));
 
             net.feedForward(inpBuff);
             net.result(resultData);
 
-            for(int j = 0; j <= resultData.size()-1; j++) {
+
+            for(auto index = 1; const auto &rd : resultData) {
                 lua_getglobal(lua, "resultData");
-                pushLuaTable(lua, j+1, resultData[j]);
+                pushLuaTable(lua, index++, rd);
             }
 
             lua_getglobal(lua, "display");
             if(lua_isfunction(lua, -1)) { 
                 lua_pushnumber(lua, i+1);
-                if(checkL(lua, lua_pcall(lua, 1, 0, 0)));
+                lua_pushnumber(lua, topology.front()-1);
+                if(checkL(lua, lua_pcall(lua, 2, 0, 0)));
             }
+            
 
-            std::vector<double> tgtBuff{targetData[i]};
+            // topology.back() == number of outputs
+            offsetBgn = topology.back()*i;
+            offsetEnd = topology.back()*(i+1);
+
+            tgtBuff.clear();
+            std::copy(targetData.begin()+offsetBgn,
+                      targetData.begin()+offsetEnd,
+                      std::back_inserter(tgtBuff));
+
             net.backPropagation(tgtBuff);
         } 
 

@@ -1,16 +1,18 @@
 require "headers/lua/commons"
 
-labels = {}         -- Optional
-topology = {}       -- Mandatory
-inputData = {}      -- Mandatory
+labels     = {}     -- Optional
+topology   = {}     -- Mandatory
+inputData  = {}     -- Mandatory
 targetData = {}     -- Mandatory
 resultData = {}     -- Mandatory
 
-iterations = 10000  -- Mandatory
+iterations = 5000  -- Mandatory
 threshold  = 0.91   -- Optional
 
 failCounter = 0     -- Optional
 passCounter = 0     -- Optional
+
+DEBUG = false       -- Optional
 
 
 function setup()
@@ -65,7 +67,58 @@ end
 
 
 -- `index` is passed from C++ - iterator over elemnts in single row of inputData
--- `resultData` is passed from C++ - calculated data based on inputs and weights
-function display(index) 
+-- `iterTo` is passed from C++ - maximum `index` value
+function display(index, iterTo) 
+    -- It goes in a loop
+    -- index == 1;  index == 2;  index == 3; etc.
 
+    local offsetBgn = 1
+    local offsetEnd = 1 
+
+
+    if next(labels) ~= nil then
+        print("\nNumber: "..labels[index])
+    end
+
+
+    if index == 1 then 
+        offsetBgn = 1
+        offsetEnd = (iterTo*index)+1
+    else
+        offsetBgn = iterTo*index
+        offsetEnd = iterTo*(index+1)
+    end
+    
+    io.write("Input: ")
+    local inpBuf = {}
+    for key,val in pairs(table.slice(inputData, offsetBgn, offsetEnd)) do
+        inpBuf[#inpBuf+1] = val
+        io.write(val, ' ')
+    end 
+
+
+    io.write('\n')
+    for key,val in pairs(resultData) do
+        if val >= threshold then
+            print("Output["..key.."]: "..string.format("%4f", val).." PASS")
+            passCounter = passCounter+1
+        else
+            print("Output["..key.."]: "..string.format("%4f", val).." FAIL")
+            failCounter = failCounter+1
+        end
+    end
+
+
+    local outIter = tonumber(topology[#topology])
+    offsetBgn = ((outIter*index)+1)-outIter
+    offsetEnd = (outIter*(index+1))-outIter
+
+    io.write("Target: ")
+    local tgtBuf = {}
+    for key,val in pairs(table.slice(targetData, offsetBgn, offsetEnd)) do
+        tgtBuf[#tgtBuf+1] = val
+        io.write(val, ' ')
+    end 
+
+    io.write('\n')
 end

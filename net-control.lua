@@ -1,2 +1,2 @@
 -- File to include test scenarious
-require "scenarios/and"
+require "scenarios/guess-num"
