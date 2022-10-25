@@ -1,18 +1,20 @@
 require "headers/lua/commons"   -- Optional
 
+DEBUG = false       -- Optional, not used
+
 labels     = {}     -- Optional
 topology   = {}     -- Mandatory
 inputData  = {}     -- Mandatory
 targetData = {}     -- Mandatory
 resultData = {}     -- Mandatory
 
-iterations = 1  -- Mandatory
-threshold  = 0.91   -- Optional
+iterations = 20000  -- Mandatory  -- minimal number of iterations when using known weights == 2 ;  recommended == input neurons * 2
 
 failCounter = 0     -- Optional
 passCounter = 0     -- Optional
 
-DEBUG = false       -- Optional
+useTrainedWeights  = true   -- Optional
+trainedWeightsFile = "./datasets/nums.weights.data"  -- Optional
 
 
 function setup()
@@ -63,6 +65,9 @@ function setup()
             labels[#labels+1] = val:sub(7)
         end
     end
+
+    -- minimal number of iterations when using known weights == 2 ;  recommended == input neurons * 2
+    if useTrainedWeights == true then iterations = topology[1]*2 end
 end
 
 

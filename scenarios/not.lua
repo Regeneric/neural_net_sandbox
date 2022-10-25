@@ -6,7 +6,7 @@ inputData  = {}     -- Mandatory
 targetData = {}     -- Mandatory
 resultData = {}     -- Mandatory
 
-iterations = 1000      -- Mandatory  -- minimal number of iterations if using trained weights == number of input neurons * 2
+iterations = 1000   -- Mandatory  -- minimal number of iterations when using known weights == 2 ;  recommended == input neurons * 2
 threshold  = 0.91   -- Optional
 
 failCounter = 0     -- Optional
@@ -51,7 +51,7 @@ function setup()
         end
     end
 
-    -- minimal number of iterations if using trained weights == number of input neurons
+    -- minimal number of iterations when using known weights == 2 ;  recommended == input neurons * 2
     if useTrainedWeights == true then iterations = topology[1]*2 end
 end
 

@@ -67,10 +67,7 @@ void Neuron::inputWeights(Layer &prevLayer, std::vector<KNOWN_WEIGHTS> &trainedW
             // std::cout << "  ID: " << trainedWeights[iter+n].id << std::endl;
             // std::cout << "weight: " << trainedWeights[iter+n].weight << std::endl;
         
-            if(n == prevLayer.size()-1) {
-                iter += n; iter += 1;
-                std::cout << "if: " << iter << std::endl;
-            }
+            if(n == prevLayer.size()-1) {iter += n; iter += 1;}
         } else {
             // std::cout << std::endl << "iter: " << iter+n << std::endl;
             // std::cout << "n: " << n << std::endl;
@@ -80,10 +77,7 @@ void Neuron::inputWeights(Layer &prevLayer, std::vector<KNOWN_WEIGHTS> &trainedW
             // std::cout << "weight: " << trainedWeights[iter+n].weight << std::endl;
 
             neuron._weights[trainedWeights[iter+n].id].weight(trainedWeights[iter+n].weight);
-            if(n == prevLayer.size()-1) {
-                iter += n; iter += 1;
-                std::cout << "if: " << iter << std::endl;
-            }
+            if(n == prevLayer.size()-1) {iter += n; iter += 1;}
         }
     } return;
 } std::vector<Connection> Neuron::inputWeights() {return _weights;}
