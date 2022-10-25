@@ -75,10 +75,31 @@ auto main() -> int {
     std::vector<double> inputData;
     std::vector<double> targetData;
     std::vector<double> resultData;
+    std::vector<KNOWN_WEIGHTS> trainedWeights;
+
+    bool useTrained = false;
+    std::string trained;
     
+    // std::vector<KNOWN_WEIGHTS> trainedWeights{
+    //     KNOWN_WEIGHTS(0, 1.78637),
+    //     KNOWN_WEIGHTS(0, -1.15553),
+    //     KNOWN_WEIGHTS(0, 1.66619),
+    //     KNOWN_WEIGHTS(0, -0.879639),
+    //     KNOWN_WEIGHTS(0, 1.71923),
+    //     KNOWN_WEIGHTS(1, 1.03479),
+    //     KNOWN_WEIGHTS(1, -0.373976),
+    //     KNOWN_WEIGHTS(0, 1.78637),
+    //     KNOWN_WEIGHTS(0, -1.15556),
+    //     KNOWN_WEIGHTS(0, 1.66622),
+    //     KNOWN_WEIGHTS(0, -0.879678),
+    //     KNOWN_WEIGHTS(0, 1.71925),
+    //     KNOWN_WEIGHTS(1, 1.0348),
+    //     KNOWN_WEIGHTS(1, -0.374015),
+    // };
+
     int iterations  = 0;
     double threshold = 0.0;
-    
+
 
     lua_State *lua = luaL_newstate();
     luaL_openlibs(lua);
@@ -105,18 +126,36 @@ auto main() -> int {
     lua_getglobal(lua, "threshold");
     if(lua_isnumber(lua, -1)) threshold = lua_tointeger(lua, -1);
 
+    lua_getglobal(lua, "trainedWeightsFile");
+    if(lua_isstring(lua, -1)) trained = lua_tostring(lua, -1);
+
+    lua_getglobal(lua, "useTrainedWeights");
+    if(lua_isboolean(lua, -1)) useTrained = lua_toboolean(lua, -1);
+
+
+    if(useTrained) {
+        std::ifstream ktwi;
+            ktwi.open(trained, std::ios::in);
+            while(!ktwi.eof()) {
+                KNOWN_WEIGHTS dummy;
+                ktwi.read((char*)&dummy, sizeof(dummy));
+                trainedWeights.push_back(dummy);
+            }
+    }
+
     Network net(topology);
-    
 
     int currIteration = 0;
     while(currIteration++ != iterations) {
+        if(!useTrained) trainedWeights.clear();
+        int iter = 0;
         std::cout << "\nStarting iteration " << currIteration << std::endl; 
 
         int inpDivider = topology.front();     // We don't number of inputs during compilation
         int iterTo = inputData.size()/inpDivider-1;
 
         std::vector<double> inpBuff;
-        std::vector<double> tgtBuff;
+        std::vector<double> tgtBuff; 
 
         for(int i = 0; i <= iterTo; i++) {
             // topology.front() == number of inputs
@@ -156,15 +195,21 @@ auto main() -> int {
                       targetData.begin()+offsetEnd,
                       std::back_inserter(tgtBuff));
 
-            net.backPropagation(tgtBuff);
+            net.backPropagation(tgtBuff, trainedWeights, iter, useTrained);
         } 
 
         std::cout << std::endl << "Avg Error: " << net.avgError() << std::endl;
         std::cout <<  "End of iteration " << currIteration << std::endl;
     }
 
+    if(!useTrained) {
+        std::ofstream two;
+            two.open(trained, std::ios::binary);
+            for(const auto &tw : trainedWeights) two.write((char*)&tw, sizeof(tw));
+            two.close();
+    }
 
-
+    
     // sf::RenderWindow app;
     //     app.create(sf::VideoMode(800, 600, 32), "Retina");
     //     app.setFramerateLimit(60);

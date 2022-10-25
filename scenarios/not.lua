@@ -6,11 +6,14 @@ inputData  = {}     -- Mandatory
 targetData = {}     -- Mandatory
 resultData = {}     -- Mandatory
 
-iterations = 1000   -- Mandatory
+iterations = 1000      -- Mandatory  -- minimal number of iterations if using trained weights == number of input neurons * 2
 threshold  = 0.91   -- Optional
 
 failCounter = 0     -- Optional
 passCounter = 0     -- Optional
+
+useTrainedWeights  = true   -- Optional
+trainedWeightsFile = "./datasets/not.weights.data"  -- Optional
 
 
 function setup()
@@ -47,6 +50,9 @@ function setup()
             labels[#labels+1] = val:sub(7)
         end
     end
+
+    -- minimal number of iterations if using trained weights == number of input neurons
+    if useTrainedWeights == true then iterations = topology[1]*2 end
 end
 
 

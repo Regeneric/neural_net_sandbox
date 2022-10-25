@@ -33,7 +33,7 @@ void Network::feedForward(const std::vector<double> &inputData) {
 }
 
 
-void Network::backPropagation(const std::vector<double> &targetData) {
+void Network::backPropagation(const std::vector<double> &targetData, std::vector<KNOWN_WEIGHTS> &trainedWeights, int &iter, bool useTrained) {
     // Root Mean Sqaure Error (RMSE) - https://en.wikipedia.org/wiki/Root-mean-square_deviation
     Layer &outputLayer = netLayers.back();
     netError = 0.0;
@@ -64,7 +64,7 @@ void Network::backPropagation(const std::vector<double> &targetData) {
         Layer &currLayer = netLayers[nl];
         Layer &prevLayer = netLayers[nl-1];
 
-        for(int n = 0; n < currLayer.size()-1; ++n) currLayer[n].inputWeights(prevLayer);
+        for(int n = 0; n < currLayer.size()-1; ++n) currLayer[n].inputWeights(prevLayer, trainedWeights, iter, useTrained);
     } return;
 }
 
@@ -72,10 +72,5 @@ void Network::result(std::vector<double> &resultData) {
     resultData.clear();
     for(int n = 0; n < netLayers.back().size()-1; ++n) {
         resultData.push_back(netLayers.back()[n].output());
-        
-        // !!! C++20 !!!
-        for(auto index = 0; auto &nl : netLayers) {
-            if(index++ == netLayers.size()-1) break;
-        }
     } return;
 }

@@ -12,7 +12,7 @@ public:
     Network(const std::vector<int> &topology);
 
     void feedForward(const std::vector<double> &inputData);
-    void backPropagation(const std::vector<double> &targetData);
+    void backPropagation(const std::vector<double> &targetData, std::vector<KNOWN_WEIGHTS> &trainedWeights, int &iter, bool useTrained = false);
     void result(std::vector<double> &resultData);
     // ~Network.cpp
 

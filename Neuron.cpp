@@ -1,4 +1,5 @@
 #include <vector>
+#include <iostream>
 #include "headers/Neuron.hpp"
 
 double Neuron::transfer(double x) {return tanh(x);}
@@ -40,21 +41,52 @@ void Neuron::hiddenGradient(const Layer &nextLayer) {
     return;
 }
 
-
-void Neuron::inputWeights(Layer &prevLayer) {
+void Neuron::inputWeights(Layer &prevLayer, std::vector<KNOWN_WEIGHTS> &trainedWeights, int &iter, bool useTrained) {
     for(int n = 0; n < prevLayer.size(); ++n) {
         Neuron &neuron = prevLayer[n];
 
-        double oldWeight = neuron._weights[_nID].weightChange();
-        double newWeight = eta * neuron.output() * _gradient + alpha * oldWeight;
+        if(!useTrained) {
+            double oldWeight = neuron._weights[_nID].weightChange();
+            double newWeight = eta * neuron.output() * _gradient + alpha * oldWeight;
 
-        double buff = neuron._weights[_nID].weight();
-        buff += newWeight;
+            double buff = neuron._weights[_nID].weight();
+            buff += newWeight;
 
-        neuron._weights[_nID].weightChange(newWeight);
-        neuron._weights[_nID].weight(buff);   
+            neuron._weights[_nID].weightChange(newWeight);
+            neuron._weights[_nID].weight(buff);   
+
+            KNOWN_WEIGHTS kw;
+                kw.id = _nID;
+                kw.weight = buff;
+            trainedWeights.push_back(kw);
+
+            // std::cout << std::endl << "iter: " << iter+n << std::endl;
+            // std::cout << "n: " << n << std::endl;
+            // std::cout << "prevLayer.size()-1: " << prevLayer.size()-1 << std::endl;
+            // std::cout << "_nID: " << _nID;
+            // std::cout << "  ID: " << trainedWeights[iter+n].id << std::endl;
+            // std::cout << "weight: " << trainedWeights[iter+n].weight << std::endl;
+        
+            if(n == prevLayer.size()-1) {
+                iter += n; iter += 1;
+                std::cout << "if: " << iter << std::endl;
+            }
+        } else {
+            // std::cout << std::endl << "iter: " << iter+n << std::endl;
+            // std::cout << "n: " << n << std::endl;
+            // std::cout << "prevLayer.size()-1: " << prevLayer.size()-1 << std::endl;
+            // std::cout << "_nID: " << _nID;
+            // std::cout << "  ID: " << trainedWeights[iter+n].id << std::endl;
+            // std::cout << "weight: " << trainedWeights[iter+n].weight << std::endl;
+
+            neuron._weights[trainedWeights[iter+n].id].weight(trainedWeights[iter+n].weight);
+            if(n == prevLayer.size()-1) {
+                iter += n; iter += 1;
+                std::cout << "if: " << iter << std::endl;
+            }
+        }
     } return;
-}
+} std::vector<Connection> Neuron::inputWeights() {return _weights;}
 
 
 double Neuron::sumDOW(const Layer &nextLayer) const {

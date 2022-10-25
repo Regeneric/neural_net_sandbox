@@ -6,7 +6,7 @@ inputData  = {}     -- Mandatory
 targetData = {}     -- Mandatory
 resultData = {}     -- Mandatory
 
-iterations = 20000  -- Mandatory
+iterations = 1  -- Mandatory
 threshold  = 0.91   -- Optional
 
 failCounter = 0     -- Optional

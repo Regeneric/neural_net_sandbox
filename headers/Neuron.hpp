@@ -7,6 +7,11 @@
 #define ETA         0.15
 #define ALPHA       0.50
 
+struct KNOWN_WEIGHTS {
+    int id;
+    double weight;
+};
+
 class Neuron;
 typedef std::vector<Neuron> Layer;
 
@@ -15,7 +20,9 @@ public:
     // Neuron.cpp
     Neuron(int outputs, int nID);
 
-    void inputWeights(Layer &prevLayer);
+    void inputWeights(Layer &prevLayer, std::vector<KNOWN_WEIGHTS> &trainedWeights, int &iter, bool useTrained = false);
+    std::vector<Connection> inputWeights();
+
     void feedForward(const Layer &prevLayer);
 
     void outputGradient(double targetData);
@@ -25,6 +32,7 @@ public:
 
     int id() {return _nID;}
     double weight() const {return _weights[_nID].weight();}
+    void weight(double weight) {_weights[_nID].weight(weight);}
 
     void output(double outputs) {_output = outputs;}
     double output() const {return _output;}
