@@ -59,23 +59,9 @@ void Neuron::inputWeights(Layer &prevLayer, std::vector<KNOWN_WEIGHTS> &trainedW
                 kw.id = _nID;
                 kw.weight = buff;
             trainedWeights.push_back(kw);
-
-            // std::cout << std::endl << "iter: " << iter+n << std::endl;
-            // std::cout << "n: " << n << std::endl;
-            // std::cout << "prevLayer.size()-1: " << prevLayer.size()-1 << std::endl;
-            // std::cout << "_nID: " << _nID;
-            // std::cout << "  ID: " << trainedWeights[iter+n].id << std::endl;
-            // std::cout << "weight: " << trainedWeights[iter+n].weight << std::endl;
         
             if(n == prevLayer.size()-1) {iter += n; iter += 1;}
         } else {
-            // std::cout << std::endl << "iter: " << iter+n << std::endl;
-            // std::cout << "n: " << n << std::endl;
-            // std::cout << "prevLayer.size()-1: " << prevLayer.size()-1 << std::endl;
-            // std::cout << "_nID: " << _nID;
-            // std::cout << "  ID: " << trainedWeights[iter+n].id << std::endl;
-            // std::cout << "weight: " << trainedWeights[iter+n].weight << std::endl;
-
             neuron._weights[trainedWeights[iter+n].id].weight(trainedWeights[iter+n].weight);
             if(n == prevLayer.size()-1) {iter += n; iter += 1;}
         }

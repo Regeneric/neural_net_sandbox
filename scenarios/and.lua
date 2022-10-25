@@ -13,7 +13,8 @@ failCounter = 0     -- Optional
 passCounter = 0     -- Optional
 
 useTrainedWeights  = true   -- Optional
-trainedWeightsFile = "./datasets/and.weights.data"  -- Optional
+trainedWeightsFile = "./datasets/weights/and.weights.data"  -- Optional
+
 
 function setup()
     local file = "./datasets/and.data"   -- Loading test data

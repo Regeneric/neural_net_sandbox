@@ -13,11 +13,11 @@ failCounter = 0     -- Optional
 passCounter = 0     -- Optional
 
 useTrainedWeights  = true   -- Optional
-trainedWeightsFile = "./datasets/weights/not.weights.data"  -- Optional
+trainedWeightsFile = "./datasets/weights/xor.weights.data"  -- Optional
 
 
 function setup()
-    local file = "./datasets/not.data"   -- Loading test data
+    local file = "./datasets/xor.data"   -- Loading test data
     local data = dataset(file)
 
     -- All kinds of data can be structured differently, so it's up to user 
@@ -33,7 +33,7 @@ function setup()
     -- out: 1.0
     -- ...
 
-
+   
     for key,val in pairs(data) do
         -- Looking for `2 4 1` etc.
         if string.find(val, "topology:") then
@@ -75,12 +75,12 @@ end
 function display(index) 
     -- It goes in a loop
     -- index == 1;  index == 2;  index == 3; etc.
-    
+
     if next(labels) ~= nil then
         print("\nStates: "..labels[index])
     end
 
-    print("Input: "..inputData[index])
+    print("Input: "..inputData[index+(index-1)]..' '..inputData[index*2])
     
     for key,val in pairs(resultData) do 
         if val >= threshold then

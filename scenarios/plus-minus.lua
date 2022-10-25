@@ -6,18 +6,18 @@ inputData  = {}     -- Mandatory
 targetData = {}     -- Mandatory
 resultData = {}     -- Mandatory
 
-iterations = 20000  -- Mandatory  -- minimal number of iterations when using known weights == 2 ;  recommended == input neurons * 2
+iterations = 1000   -- Mandatory  -- minimal number of iterations when using known weights == 2;  recommended == input neurons * 2
 threshold  = 0.91   -- Optional
 
 failCounter = 0     -- Optional
 passCounter = 0     -- Optional
 
 useTrainedWeights  = true   -- Optional
-trainedWeightsFile = "./datasets/weights/nums.weights.data"  -- Optional
+trainedWeightsFile = "./datasets/weights/plusminus.weights.data"  -- Optional
 
 
 function setup()
-    local file = "./datasets/nums.data"   -- Loading test data
+    local file = "./datasets/plusminus.data"   -- Loading test data
     local data = dataset(file)
 
     -- All kinds of data can be structured differently, so it's up to user 
@@ -65,7 +65,7 @@ function setup()
         end
     end
 
-    -- minimal number of iterations when using known weights == 2 ;  recommended == input neurons * 2
+    -- minimal number of iterations when using known weights == 2;  recommended == input neurons * 2
     if useTrainedWeights == true then iterations = topology[1]*2 end
 end
 
@@ -81,18 +81,26 @@ function display(index, iterTo)
 
 
     if next(labels) ~= nil then
-        print("\nNumber: "..labels[index])
+        print("\n"..labels[index])
     end
 
 
-    if index == 1 then 
-        offsetBgn = 1
-        offsetEnd = (iterTo*index)+1
-    else
-        offsetBgn = iterTo*index
-        offsetEnd = iterTo*(index+1)
-    end
+    -- if index == 1 then 
+    --     offsetBgn = 1
+    --     offsetEnd = (iterTo*index)+1
+    -- else
+    --     offsetBgn = iterTo*index
+    --     offsetEnd = iterTo*(index+1)
+    -- end
     
+    if index == 1 then 
+        offsetBgn = (iterTo*index)-iterTo+1
+        offsetEnd = iterTo*(index+1)-iterTo+1
+    else 
+        offsetBgn = (iterTo*index)-iterTo+2
+        offsetEnd = iterTo*(index+1)-iterTo+2 
+    end
+
     io.write("Input: ")
     local inpBuf = {}
     for key,val in pairs(table.slice(inputData, offsetBgn, offsetEnd)) do
@@ -101,15 +109,16 @@ function display(index, iterTo)
     end 
 
 
-    io.write('\n')
+    io.write('\nOutput: ')
     for key,val in pairs(resultData) do
-        if val >= threshold then
-            print("Output["..key.."]:", string.format("%4f", val), "PASS")
-            passCounter = passCounter+1
-        else
-            print("Output["..key.."]:", string.format("%4f", val), "FAIL")
-            failCounter = failCounter+1
-        end
+        -- if val >= threshold then
+        --     print("Output["..key.."]:", string.format("%4f", val), "PASS")
+        --     passCounter = passCounter+1
+        -- else
+        --     print("Output["..key.."]:", string.format("%4f", val), "FAIL")
+        --     failCounter = failCounter+1
+        -- end
+        io.write(string.format("%4f ", val))
     end
 
 
@@ -117,11 +126,11 @@ function display(index, iterTo)
     offsetBgn = ((outIter*index)+1)-outIter
     offsetEnd = (outIter*(index+1))-outIter
 
-    io.write("Target: ")
+    io.write("\nTarget: ")
     local tgtBuf = {}
     for key,val in pairs(table.slice(targetData, offsetBgn, offsetEnd)) do
         tgtBuf[#tgtBuf+1] = val
-        io.write(val, ' ')
+        io.write(string.format("%4f ", val))
     end 
 
     io.write('\n')

@@ -79,23 +79,6 @@ auto main() -> int {
 
     bool useTrained = false;
     std::string trained;
-    
-    // std::vector<KNOWN_WEIGHTS> trainedWeights{
-    //     KNOWN_WEIGHTS(0, 1.78637),
-    //     KNOWN_WEIGHTS(0, -1.15553),
-    //     KNOWN_WEIGHTS(0, 1.66619),
-    //     KNOWN_WEIGHTS(0, -0.879639),
-    //     KNOWN_WEIGHTS(0, 1.71923),
-    //     KNOWN_WEIGHTS(1, 1.03479),
-    //     KNOWN_WEIGHTS(1, -0.373976),
-    //     KNOWN_WEIGHTS(0, 1.78637),
-    //     KNOWN_WEIGHTS(0, -1.15556),
-    //     KNOWN_WEIGHTS(0, 1.66622),
-    //     KNOWN_WEIGHTS(0, -0.879678),
-    //     KNOWN_WEIGHTS(0, 1.71925),
-    //     KNOWN_WEIGHTS(1, 1.0348),
-    //     KNOWN_WEIGHTS(1, -0.374015),
-    // };
 
     int iterations  = 0;
     double threshold = 0.0;

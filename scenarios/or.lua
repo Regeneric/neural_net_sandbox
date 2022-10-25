@@ -6,15 +6,18 @@ inputData  = {}     -- Mandatory
 targetData = {}     -- Mandatory
 resultData = {}     -- Mandatory
 
-iterations = 1000   -- Mandatory
+iterations = 1000   -- Mandatory  -- minimal number of iterations when using known weights == 2 ;  recommended == input neurons * 2
 threshold  = 0.91   -- Optional
 
 failCounter = 0     -- Optional
 passCounter = 0     -- Optional
 
+useTrainedWeights  = true   -- Optional
+trainedWeightsFile = "./datasets/weights/or.weights.data"  -- Optional
+
 
 function setup()
-    local file = "./datasets/or-control.data"   -- Loading test data
+    local file = "./datasets/or.data"   -- Loading test data
     local data = dataset(file)
 
     -- All kinds of data can be structured differently, so it's up to user 
@@ -61,6 +64,9 @@ function setup()
             labels[#labels+1] = val:sub(7)
         end
     end
+
+    -- minimal number of iterations when using known weights == 2 ;  recommended == input neurons * 2
+    if useTrainedWeights == true then iterations = topology[1]*2 end
 end
 
 

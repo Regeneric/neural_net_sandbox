@@ -1,6 +1,9 @@
-desc: plus
+topology: 9 6 2
+
+desc: PLUS
 in: 0.0 1.0 0.0 1.0 1.0 1.0 0.0 1.0 0.0
 out: 1.0 0.0
-desc: minus
+
+desc: MINUS
 in: 0.0 0.0 0.0 1.0 1.0 1.0 0.0 0.0 0.0
 out: 0.0 1.0
