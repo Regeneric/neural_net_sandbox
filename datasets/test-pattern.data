@@ -1,0 +1,4 @@
+topology: 100 5 10
+
+desc: TEST PATTERN
+out: 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0 1.0 0.0

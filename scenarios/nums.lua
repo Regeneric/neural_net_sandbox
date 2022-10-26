@@ -15,6 +15,8 @@ passCounter = 0     -- Optional
 useTrainedWeights  = true   -- Optional
 trainedWeightsFile = "./datasets/weights/nums.weights.data"  -- Optional
 
+useRetina = false   -- Optional  -  use SFML canvas to provide input data
+
 
 function setup()
     local file = "./datasets/nums.data"   -- Loading test data

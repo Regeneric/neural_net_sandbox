@@ -23,53 +23,111 @@ extern "C" {
 }
 
 
+#include "headers/commons.hpp"
+
 #include "headers/Connection.hpp"
 #include "headers/Neuron.hpp"
 #include "headers/Network.hpp"
 
-
-#define Rect sf::RectangleShape
-#define R_WIDTH 50
-#define R_HEIGHT 50
-
 #define FILE "net-config.lua"
 
 
-bool checkL(lua_State *lua, int l) {
-    if(l != LUA_OK) {
-        std::string err = lua_tostring(lua, -1);
-        std::cout << err << std::endl;
-        return false;
-    } return true;
-}
-
-template <class T>
-void luaTable(lua_State *lua, std::vector<T> &table) {
-    lua_pushvalue(lua, -1);
-    lua_pushnil(lua);
-
-    while(lua_next(lua, -2)) {
-        lua_pushvalue(lua, -2);
-        int val = lua_tointeger(lua, -2);
-        table.push_back((T)val);
-        lua_pop(lua, 2);
-    } lua_pop(lua, 1);
-
-    return;
-}
-
-template <class K, class V>
-void pushLuaTable(lua_State *lua, K key, V &value, int size) {
-    // lua_checkstack(lua, size);
-    lua_pushinteger(lua, key);
-    lua_pushnumber(lua, value);
-    lua_settable(lua, -3);
-
-    return;
-}
-
-
 auto main() -> int {
+    bool useRetina = false;
+
+    lua_State *lua = luaL_newstate();
+    luaL_openlibs(lua);
+
+    if(!checkL(lua, luaL_dofile(lua, FILE)));
+    lua_getglobal(lua, "useRetina");
+    if(lua_isboolean(lua, -1)) useRetina = lua_toboolean(lua, -1);
+
+
+    if(useRetina) {
+        sf::RenderWindow app;
+            app.create(sf::VideoMode(250, 250, 32), "Retina", sf::Style::Default);
+            app.setFramerateLimit(100);
+            app.setVerticalSyncEnabled(false);
+
+        
+        // Setting up canvas - whiteboard to draw letters
+        sf::RenderTexture canvas;
+            canvas.create(250, 250);
+            canvas.clear(sf::Color::White);
+
+        sf::Sprite sprite;
+            sprite.setTexture(canvas.getTexture(), true);
+
+        const float brushSize = 5;
+        sf::Color brushColor = sf::Color::Black;
+        // const std::vector<sf::Color> colors{
+        //     sf::Color(255, 0, 0, 8),
+        //     sf::Color(255, 255, 0, 8),
+        //     sf::Color(0, 255, 0, 8),
+        //     sf::Color(0, 255, 255, 8),
+        //     sf::Color(0, 0, 255, 8),
+        //     sf::Color(255, 0, 255, 8)
+        // };
+        sf::CircleShape brush(brushSize, 24);
+            brush.setFillColor(brushColor);
+
+        sf::Vector2f lastPos;
+        bool isDrawing = false;
+        // int color = 0;
+
+
+        while(app.isOpen()) {
+            sf::Event event;
+            while(app.pollEvent(event)) {
+                switch(event.type) {
+                    case sf::Event::Closed: app.close(); break;
+                    case sf::Event::Resized: {
+                        const sf::Vector2f size(app.getSize().x, app.getSize().y);
+                        sf::View view(app.getView());
+                            view.setSize(size);
+                            view.setCenter(size/2.f);
+                            app.setView(view);
+                    } break;
+                    case sf::Event::KeyPressed: {
+                        switch(event.key.code) {
+                            case sf::Keyboard::C: {
+                                canvas.clear(sf::Color::White);
+                                canvas.display();
+                            } break;
+                        }
+                    } break;
+                    case sf::Event::MouseButtonPressed: {
+                        if(event.mouseButton.button == sf::Mouse::Left) {
+                            isDrawing = true;
+                            lastPos = app.mapPixelToCoords({event.mouseButton.x, event.mouseButton.y});
+                            
+                            brush.setPosition(lastPos);
+                            canvas.draw(brush);
+                            canvas.display();
+                        }
+                    } break;
+                    case sf::Event::MouseButtonReleased: {
+                        if(event.mouseButton.button == sf::Mouse::Left) isDrawing = false;
+                    } break;
+                    case sf::Event::MouseMoved: {
+                        if(isDrawing) {
+                            const sf::Vector2f newPos(app.mapPixelToCoords(sf::Vector2i(event.mouseMove.x, event.mouseMove.y)));
+                            
+                            brush.setPosition(newPos);
+                            canvas.draw(brush);
+                            canvas.display();
+                        }
+                    } break;
+                }
+            } app.clear(sf::Color(230, 230, 230));
+
+            app.draw(sprite);
+            app.display();
+        }
+    }
+    
+
+
     std::vector<int> topology;
     
     std::vector<double> inputData;
@@ -84,11 +142,6 @@ auto main() -> int {
     double threshold = 0.0;
 
 
-    lua_State *lua = luaL_newstate();
-    luaL_openlibs(lua);
-
-    if(!checkL(lua, luaL_dofile(lua, FILE)));
-    
     lua_getglobal(lua, "setup");
     if(lua_isfunction(lua, -1)) {
         if(checkL(lua, lua_pcall(lua, 0, 0, 0)));
@@ -97,8 +150,10 @@ auto main() -> int {
     lua_getglobal(lua, "topology");
     if(lua_istable(lua, -1)) luaTable(lua, topology);
 
-    lua_getglobal(lua, "inputData");
-    if(lua_istable(lua, -1)) luaTable(lua, inputData);
+    if(!useRetina) {
+        lua_getglobal(lua, "inputData");
+        if(lua_istable(lua, -1)) luaTable(lua, inputData);
+    }
 
     lua_getglobal(lua, "targetData");
     if(lua_istable(lua, -1)) luaTable(lua, targetData);
