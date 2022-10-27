@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -ggdb -pg -g3 -llua -ldl -lX11 -lGL -lpng -lstdc++fs -std=c++20 -lsfml-graphics -lsfml-window -lsfml-system
+CFLAGS = -ggdb -g3 -llua -ldl -lX11 -lGL -lpng -lstdc++fs -std=c++20 -lsfml-graphics -lsfml-window -lsfml-system
 
 all: main.o neuron.o network.o
 	$(CC) $(CFLAGS) ./build/main.o ./build/neuron.o ./build/network.o -o ./neural-net

@@ -7,21 +7,21 @@ inputData  = {}     -- Mandatory
 targetData = {}     -- Mandatory
 resultData = {}     -- Mandatory
 
-iterations = 1000  -- Mandatory  -- minimal number of iterations when using known weights == 2 ;  recommended == input neurons * 2
+iterations = 50000  -- Mandatory  -- minimal number of iterations when using known weights == 2 ;  recommended == input neurons * 2
 threshold  = 0.91   -- Optional
 
 failCounter = 0     -- Optional
 passCounter = 0     -- Optional
 
-useTrainedWeights  = true   -- Optional
-trainedWeightsFile = "./datasets/weights/test-pattern.weights.data"  -- Optional
+useTrainedWeights  = false   -- Optional
+trainedWeightsFile = "./datasets/weights/letters-owen.weights.data"  -- Optional
 
 useRetina = false   -- Optional  -  use SFML canvas to provide input data
 
 
 function setup()
-    local inputFile = "./datasets/test-pattern.input.data"
-    local dataFile  = "./datasets/test-pattern.data"
+    local inputFile = "./datasets/letters-owen.input.data"
+    local dataFile  = "./datasets/letters.data"
     
     inputData = bytes(inputFile, true)
     local data  = dataset(dataFile, true)
@@ -56,11 +56,10 @@ end
 
 
 function display(index, iterTo)
-    local width  = 50
-    local height = 50  
+    if index > tonumber(topology[#topology]) then return {} end
 
     if next(labels) ~= nil then
-        print("\n"..labels[index])
+        print("\nLetter: "..labels[index])
     end
 
     
@@ -75,10 +74,16 @@ function display(index, iterTo)
         end
     end
 
-    io.write('\nTarget: ')
-    for key,val in pairs(targetData) do
-        io.write(string.format("%2f ", val))
-    end
+    local outIter = tonumber(topology[#topology])
+    offsetBgn = ((outIter*index)+1)-outIter
+    offsetEnd = (outIter*(index+1))-outIter
+
+    io.write("Target: ")
+    local tgtBuf = {}
+    for key,val in pairs(table.slice(targetData, offsetBgn, offsetEnd)) do
+        tgtBuf[#tgtBuf+1] = val
+        io.write(val, ' ')
+    end 
 
     io.write('\n')
 end
