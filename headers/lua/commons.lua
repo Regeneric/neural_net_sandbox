@@ -1,6 +1,6 @@
 package.path = package.path..";./headers/lua/?.lua"    -- Optional
 json = require "json" 
-
+fennel = require("fennel").install()
 
 function fileExists(file) 
     local file = io.open(file, "rb")
